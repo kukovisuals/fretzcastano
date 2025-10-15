@@ -11,6 +11,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
 }
 
 a {
@@ -33,12 +34,17 @@ body {
 /* Overlay container */
 .controls {
   position: absolute;
-  top: 12px;
+  bottom: 12px;
   right: 12px;
   z-index: 10;              /* sits above the canvas */
   display: flex;
   gap: 8px;
   pointer-events: none;      /* let canvas receive mouse events... */
+}
+.controls .btn,
+.controls .goto input,
+.controls .goto button {
+  pointer-events: auto;            /* these are clickable/typable */
 }
 
 /* Buttons */
@@ -72,12 +78,12 @@ body {
 }
 
 /* Optional: stack vertically on very small screens */
-@media (max-width: 420px) {
+/* @media (max-width: 420px) {
   .controls {
     flex-direction: column;
     right: 8px;
     top: 8px;
     gap: 6px;
   }
-}
+} */
 
