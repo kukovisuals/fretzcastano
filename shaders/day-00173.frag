@@ -1,0 +1,284 @@
+uniform vec3 iResolution;
+uniform float iTime; 
+/*
+    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+    
+    ▓              🎃  KuKo Day 173  🎃               
+    
+    ▓  Flame from @yufengjie  
+    ▓  https://www.shadertoy.com/view/wfSBzV
+    
+    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+*/
+
+#define S(a,b,c) smoothstep(a,b,c)
+#define STEM 5.0
+#define T iTime
+#define s1(v) (sin(v)*.5+.5)
+#define AA 2
+
+vec2 combineMin(vec2 a, vec2 b)
+{
+    return (a.x < b.x)? a : b;
+}
+
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+mat2 rotate2D(float a){
+    float s = sin(a);
+    float c = cos(a);
+    return mat2(c,-s,s,c);
+}
+
+mat4 rotationY( in float angle ) {
+    float c = cos(angle);
+    float s = sin(angle);
+    
+	return mat4( c, 0,	 s,	0,
+			 	 0,	1.0, 0,	0,
+				-s,	0,	 c,	0,
+				 0, 0,	 0,	1);
+}
+
+float fbm(vec3 p){
+    float amp = 1.;
+    float fre = 1.;
+    float n = 0.;
+    for(float i = 0.; i < 4.; i++){
+        n += abs(dot(cos(p*fre), vec3(.1,.2,.3))) * amp;
+        amp *= .59;
+        fre *= 1.3;
+        p.xz *= rotate2D(p.y*.1 + T*.3);
+        p.y -= T*3.; // Upward motion
+    }
+    return n;
+}
+
+float smax( float a, float b, float k )
+{
+    float h = max(k-abs(a-b),0.0);
+    return max(a, b) + h*h*0.25/k;
+}
+
+float sdEllipsoid( in vec3 p, in vec3 r )
+{
+    float k1 = length(p/r);
+    return (k1-1.0)*min(min(r.x,r.y),r.z);
+}
+
+float sdBox( vec3 p, vec3 b )
+{
+    vec3 q = abs(p) - b;
+    return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
+vec2 SDFPumpkin(vec3 pos)
+{  
+    float scale = 2.5;
+    pos *= scale;
+    float proxy = length(pos - vec3(0.0, 0.2, 0.0));
+    
+    if (proxy > 4.0)
+    {
+    	return vec2(proxy - 3.0, 0.0);
+    }
+    else   
+    {   
+        float angle = atan(pos.x, pos.z);
+        float section = smax(0.05, abs(sin(angle * 4.0)), 0.05) * 0.1;
+        float longLen = length(pos.xz);
+        float pinch = S(1.4, -0.2, longLen);
+
+        float pumpkin = sdEllipsoid(pos, vec3(1.7, 1.5, 1.7)) + pinch * 0.6;
+        
+        float pumpkinDisplace =  ((sin(angle * 25.0) + sin(angle * 43.0)) * 0.0015 - section) * S(0.2, 1.3, longLen);
+        pumpkin += pumpkinDisplace;
+
+        float stem = longLen - 0.29 + S(1.1, 1.5, pos.y) * 0.15 + sin(angle * 4.0) * 0.01;
+        float stemDisplace = sin(angle * 10.0);
+        stem += stemDisplace * 0.005;
+        stem -= (pos.y - 1.2) * 0.1;
+        stem *= 0.8;
+        
+        float stemCut = pos.y - 1.6 + pos.x * 0.3;
+        stem = smax(stem, stemCut, 0.05);
+        stem = max(stem, 1.0 - pos.y);
+
+        float pumpkinID = clamp(pumpkinDisplace * 4.0 + 0.5, 0.0, 0.999);
+	    float stemID = STEM + (0.5 + stemDisplace * 0.2) * S(0.1, -0.6, stemCut);
+        
+        pumpkin = abs(pumpkin) - 0.05;
+
+        // Face carving
+        float face = length(pos.xy - vec2(0.0, 0.3)) - 1.1;
+        face = max(face, -(length(pos.xy - vec2(0.0, 1.8)) - 2.0));
+        
+        float teeth = abs(pos.x - 0.4) - 0.16;
+        teeth = smax(teeth, -0.45 - pos.y + pos.x * 0.1, 0.07);
+        
+        float teeth2 = abs(pos.x + 0.40) - 0.16;
+        teeth2 = smax(teeth2, 0.5 + pos.y + pos.x * 0.05, 0.07);
+        
+        face = smax(face, -min(teeth, teeth2), 0.07);
+
+        vec2 symPos = pos.xy;
+        symPos.x = abs(symPos.x);
+
+        float nose = -pos.y + 0.1;
+        nose = max(nose, symPos.x - 0.25 + symPos.y* 0.5);
+
+        float eyes = -pos.y + 0.48 - symPos.x * 0.17;
+        eyes = max(eyes, symPos.x - 1.0 + symPos.y * 0.5);
+        eyes = max(eyes, -symPos.x - 0.05 + symPos.y * 0.5);
+
+        face = min(face, nose);
+        face = min(face, eyes);
+        face = max(face, pos.z);
+
+        pumpkin = smax(pumpkin, -face, 0.03);
+
+        vec2 res = vec2(pumpkin, pumpkinID);
+		res = combineMin(res, vec2(stem, stemID));
+        res.x /= scale;
+        return res;
+    }
+}
+
+float sdFlame(vec3 p, out vec3 flameCol)
+{
+    p.y -= 0.; // Start at pumpkin top
+    vec3 q = p;
+    //q.z += T;
+    q.y -= T;
+    q = vec3(mod(q.x + 0.5, 5.0) - 2.5,mod(q.y + 0.5, 5.0) - 2.5, mod(q.z + 0.5, 5.0) - 2.5);
+    // Flame parameters
+    float h = 10.1;  // Height of flame
+    float range = S(-h, h, p.y);
+    float w = range * 0.6 + 0.2;  // Width tapers with height
+    float thick = range * 0.4 + 0.15;
+    
+    // Twist flame as it rises
+    q.xz *= rotate2D(q.y * 2. - T * 1.);
+    
+    // Create hollow column shape
+    float d = SDFPumpkin(q).x;
+    float d1 = SDFPumpkin(q - vec3(0, 0.3, 0)).x;
+    d = max(d, -d1);
+    
+    // Add turbulence
+    d += fbm(p * 2.) * .4;
+    
+    // Convert to thin shell for glow
+    d = abs(d) * .15 + .001;
+    
+    // Flame color gradient (red->yellow->white going up)
+    vec3 c = s1(vec3(3, 2, 1) + (p.y + p.z) * .5 - T * 2.);
+    
+    // Inverse square falloff for glow
+    flameCol = pow(1.2 / d, 2.) * c;
+    
+    return d;
+}
+
+float map(vec3 p)
+{
+    vec3 oneUv = p;
+    
+    oneUv.y -= iTime * 1.;
+    oneUv = vec3(mod(oneUv.x + 0.5, 5.0) - 2.5,mod(oneUv.y + 0.5, 5.0) - 2.5, mod(oneUv.z + 0.5, 5.0) - 2.5);
+    
+    oneUv.xz *= rotate2D(T);
+    
+    vec2 d1 = SDFPumpkin(oneUv);
+    return d1.x;
+}
+
+float rayMarch(vec3 ro, vec3 rd, out vec3 flameGlow)
+{
+    float dt = 0.0;
+    flameGlow = vec3(0);
+    
+    for(int i = 0; i < 60; i++)
+    {
+        vec3 p = ro + rd * dt;
+        
+        vec3 fCol = vec3(0);
+        float dFlame = sdFlame(p, fCol);
+        
+        flameGlow += fCol * 0.00005;
+        
+        float d = map(p);
+        float dMin = min(d, dFlame);
+        dt += dMin;
+        
+        if(abs(d) < 0.001 || dt > 30.0) break;
+    }
+    
+    return dt;
+}
+
+vec3 calcNormal(vec3 p)
+{
+    float e = 0.001;
+    return normalize(vec3(
+        map(p + vec3(e,0,0)) - map(p - vec3(e,0,0)),
+        map(p + vec3(0,e,0)) - map(p - vec3(0,e,0)),
+        map(p + vec3(0,0,e)) - map(p - vec3(0,0,e))
+    ));
+}
+
+mat3 setCamera( in vec3 ro, in vec3 ta, float cr )
+{
+    vec3 cw = normalize(ta-ro);
+    vec3 cp = vec3(sin(cr), cos(cr),0.0);
+    vec3 cu = normalize( cross(cw,cp) );
+    vec3 cv = ( cross(cu,cw) );
+    return mat3( cu, cv, cw );
+}
+
+void mainImage( out vec4 O, in vec2 I )
+{
+    vec3 ta = vec3(0, 2, 0);
+    vec3 ro = ta + vec3(5.0*cos(-0.2 * T), 2.0, 5.0*sin(-.2 * T)); 
+    
+    mat3 ca = setCamera(ro, ta, 0.0);
+    
+    vec3 tot = vec3(0.0);
+    
+    for (int m = 0; m < AA; m++)
+    for (int n = 0; n < AA; n++) {
+        vec2 off = vec2(m, n) / float(AA) - 0.5;
+        vec2 uv = (2.0 * (I + off) - iResolution.xy) / iResolution.y;
+        
+        vec3 rd = ca * normalize(vec3(uv, 2.0));
+        
+        vec3 col = vec3(0);
+        vec3 flameGlow = vec3(0);
+        float dt = rayMarch(ro, rd, flameGlow);
+        
+        if(dt < 30.0)
+        {
+            vec3 p = ro + rd * dt;
+            vec3 norm = calcNormal(p);
+            
+            //col = 0.3 + 0.5*norm.yxz;
+            //col *= vec3(1.2, 0.6, 0.3);
+            col = mix(col, vec3(0.0), 1.0 - exp(-0.001*dt*dt*dt));
+        }
+        
+        flameGlow = tanh(flameGlow / 2.0);
+        col += flameGlow;
+        
+        tot += col;
+    }
+    
+    tot /= float(AA * AA);
+    
+    O = vec4(tot, 1.0);
+}
+
+void main() {
+    mainImage(gl_FragColor, gl_FragCoord.xy);
+}
