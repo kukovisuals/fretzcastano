@@ -1,5 +1,8 @@
 uniform vec3 iResolution;
 uniform float iTime; 
+uniform vec4 iMouse;
+uniform sampler2D iChannel0;
+uniform sampler2D iChannel1;
 
 #define ANIMATE
 #define H(n) fract( 1e4 * sin( n.x+n.y/.7 +vec2(1,12.34) ) )

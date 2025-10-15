@@ -1,5 +1,8 @@
 uniform vec3 iResolution;
 uniform float iTime; 
+uniform vec4 iMouse;
+uniform sampler2D iChannel0;
+uniform sampler2D iChannel1;
 
 // Created by Stephane Cuillerdier - Aiekick/2015 (twitter:@aiekick)
 // License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.

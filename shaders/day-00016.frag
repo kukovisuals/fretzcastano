@@ -1,5 +1,8 @@
 uniform vec3 iResolution;
 uniform float iTime; 
+uniform vec4 iMouse;
+uniform sampler2D iChannel0;
+uniform sampler2D iChannel1;
 
 // forked -> Iq's https://www.shadertoy.com/view/ldl3W8
 // fabrice -> https://www.shadertoy.com/view/4dKSDV
@@ -163,7 +166,6 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col = mix( vec3(0.9), col, smoothstep( 0.00, 0.02, c.x )  );
 	fragColor = vec4(col,1.0);
 }
-
 void main() {
     mainImage(gl_FragColor, gl_FragCoord.xy);
 }

@@ -1,64 +1,216 @@
 // main.js
 import * as THREE from 'three';
-import { get, latestId, nextId, prevId } from './shaders/main.js';
+import { get, getBuffers, latestId, nextId, prevId, idsAsc } from './shaders/main.js';
 import './style.css'
 
-let currentId = latestId;
+const pad5 = (n) => String(n).padStart(5, '0');
+const coerceToId = (raw) => {
+  if (!raw) return null;
+  const s = String(raw).trim().toLowerCase();
+  if (s.startsWith('day-')) return s;                 // already day-00042
+  const digits = s.replace(/\D+/g, '');               // keep numbers only
+  if (!digits) return null;
+  return `day-${pad5(digits)}`;
+};
 
+const exists = (id) => !!get(id);
+
+const url = new URL(location.href);
+let currentId =
+  coerceToId(url.searchParams.get('id')) ||
+  coerceToId(url.searchParams.get('day')) ||
+  coerceToId(location.hash.replace('#','')) ||
+  latestId;
+
+if (!exists(currentId)) currentId = latestId;
+                      // or any id
+// const imageCode = get(currentId);                   // final pass code
+// const { A, B, C, D } = getBuffers(currentId);      // any that exist for this day
+
+console.log(currentId)
 // Basic Three.js setup
+const canvas  = document.createElement('canvas');
+const context = canvas.getContext('webgl2');      // <-- WebGL2
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer();
+// const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ canvas, context });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 camera.position.z = 1;
 
-// Define uniforms for shader
-const uniforms = {
-  iResolution: { value: new THREE.Vector3() },
-  iTime: { value: 0.0 }
-};
-
-// Update the resolution uniform
-function updateUniforms() {
-  uniforms.iResolution.value.set(window.innerWidth, window.innerHeight, 1);
-}
-updateUniforms();
-window.addEventListener('resize', () => {
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  updateUniforms();
-});
-
-
-// Create ShaderMaterial
-const material = new THREE.ShaderMaterial({
-  fragmentShader: get(currentId),
-  uniforms,
-});
-
-// Plane geometry to display shader
-const geometry = new THREE.PlaneGeometry(2, 2);
-const plane = new THREE.Mesh(geometry, material);
+const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), null);
 scene.add(plane);
 
-// Animation loop
-function animate() {
-  uniforms.iTime.value += 0.01; // Update time uniform
-  renderer.render(scene, camera);
-  requestAnimationFrame(animate);
-}
-animate();
+// Shared uniforms
+const common = {
+  iResolution: { value: new THREE.Vector3(innerWidth, innerHeight, 1) },
+  iTime: { value: 0.0 },
+  iFrame: { value: 0 }
+};
 
-function show(id){
+
+addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  common.iResolution.value.set(innerWidth, innerHeight, 1);
+  rebuild(currentId); // recreate RTs/materials for new size
+});
+
+// ---------- Buffers + Image wiring ----------
+const VERT = `void main(){ gl_Position = vec4(position,1.0); }`;
+
+function makeRT() {
+  const type =
+    (renderer.capabilities.isWebGL2 && renderer.extensions.has('EXT_color_buffer_float'))
+      ? THREE.FloatType
+      : THREE.HalfFloatType; // fallback
+
+  const rt = new THREE.WebGLRenderTarget(innerWidth, innerHeight, {
+    type,
+    // format: THREE.RGBAFormat,
+    // depthBuffer: false,
+    // stencilBuffer: false,
+  });
+
+  return rt;
+}
+
+
+let mats = null; // { A?,B?,C?,D?, image }
+let rts  = null; // { A?,B?,C?,D? } plain render targets (no ping-pong; add if needed)
+// state
+let ping = null;   // { A:{read,write,mat}, B:{...}, ... }
+let imgMat = null; 
+
+/** Build materials/render targets for a given day */
+
+function rebuild(dayId) {
+  // dispose previous
+  if (ping) Object.values(ping).forEach(p => {
+    p?.mat?.dispose(); p?.read?.dispose(); p?.write?.dispose();
+  });
+  imgMat?.dispose();
+
+  const imageCode = get(dayId);
+  const { A, B, C, D } = getBuffers(dayId);
+
+  ping = {};
+  const scene = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2,2), null);
+  scene.add(quad);
+
+  // create buffers A..D if present (with ping-pong)
+  for (const [letter, code] of Object.entries({ A, B, C, D })) {
+    if (!code) continue;
+    const read = makeRT();
+    const write = makeRT();
+    const mat = new THREE.ShaderMaterial({
+      vertexShader: VERT,
+      fragmentShader: code,
+      uniforms: {
+        ...common,
+        // IMPORTANT: sample previous frame (read.texture), render to write
+        iChannel0: { value: read.texture }
+      }
+    });
+    
+    ping[letter] = { read, write, mat };
+  }
+
+  // final image: read current buffer textures (will be set each frame)
+  const imgUniforms = { ...common };
+  ['A','B','C','D'].forEach((k, i) => {
+    if (ping[k]) imgUniforms[`iChannel${i}`] = { value: ping[k].read.texture };
+  });
+
+  imgMat = new THREE.ShaderMaterial({
+    vertexShader: VERT,
+    fragmentShader: imageCode,
+    uniforms: imgUniforms
+  });
+
+  // stash refs needed by render loop
+  rebuild.scene = scene;
+  rebuild.camera = camera;
+  rebuild.quad = quad;
+}
+
+rebuild(currentId);
+
+// ---------- Frame loop ----------
+renderer.setAnimationLoop(() => {
+  common.iTime.value = performance.now()*0.001;
+  common.iFrame.value++;
+
+  // 1) render each buffer to its WRITE target, sampling READ (prev frame)
+  for (const k of ['A','B','C','D']) {
+    const p = ping[k]; if (!p) continue;
+    p.mat.uniforms.iChannel0.value = p.read.texture; // prev frame
+    rebuild.quad.material = p.mat;
+    renderer.setRenderTarget(p.write);
+    renderer.render(rebuild.scene, rebuild.camera);
+    renderer.setRenderTarget(null);
+  }
+
+  // 2) SWAP read/write so "read" holds the latest frame
+  for (const k of ['A','B','C','D']) {
+    const p = ping[k]; if (!p) continue;
+    [p.read, p.write] = [p.write, p.read];
+  }
+
+  // 3) update image uniforms to point at current READ textures
+  ['A','B','C','D'].forEach((k, i) => {
+    const p = ping[k]; if (!p) return;
+    const u = imgMat.uniforms[`iChannel${i}`];
+    if (u) u.value = p.read.texture;
+  });
+
+  // 4) draw final image to screen
+  rebuild.quad.material = imgMat;
+  renderer.render(rebuild.scene, rebuild.camera);
+});
+
+function show(id) {
   const code = get(id);
   if (!code) return;
   currentId = id;
-  material.fragmentShader = code;
-  material.needsUpdate = true;
+  history.replaceState(null, '', `?id=${id}`);  // <- keeps linkable
+  rebuild(id);
 }
+
+const $in  = document.getElementById('goto-input');
+const $btn = document.getElementById('goto-btn');
+
+function jump(raw){
+  const id = coerceToId(raw);
+  if (id && exists(id)) {
+    // keep URL in sync for sharing/back button
+    history.replaceState(null, '', `?id=${id}`);
+    show(id);
+    if ($in) $in.value = ''; // clear
+  } else {
+    // optional: snap to closest existing day
+    // const nearest = idsAsc.reduce((best, x)=> Math.abs(+x.slice(4)-raw)<Math.abs(+best.slice(4)-raw)?x:best, idsAsc[0]);
+    // show(nearest);
+    console.warn('Day not found:', raw);
+  }
+}
+
+$btn?.addEventListener('click', () => jump($in?.value));
+$in?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') jump($in.value);
+});
+
+// Allow direct hash navigation like #day-00100
+addEventListener('hashchange', () => {
+  const id = coerceToId(location.hash.replace('#',''));
+  if (id && exists(id)) show(id);
+});
+
 document.getElementById('next')?.addEventListener('click', () => {
   const nid = nextId(currentId);
   if (nid) show(nid);
@@ -67,4 +219,3 @@ document.getElementById('prev')?.addEventListener('click', () => {
   const pid = prevId(currentId);
   if (pid) show(pid);
 });
-

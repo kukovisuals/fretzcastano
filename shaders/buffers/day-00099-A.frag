@@ -1,23 +1,10 @@
 uniform vec3 iResolution;
-uniform float iTime; 
+uniform float iTime;
 uniform vec4 iMouse;
 uniform sampler2D iChannel0;
 uniform sampler2D iChannel1;
-
-/*
-    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-    
-    
-    ▓              🌟  KuKo Day 99  🌟                
-    
-    ▓  Vector fields 
-    
-    ▓  color idea from https://www.shadertoy.com/view/XfXGz4
-    
-    
-    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-*/
-
+uniform int       iFrame;  
+uniform float     iTimeDelta; 
 // *** Change these to suit your range of random numbers..
 
 // *** Use this for integer stepped ranges, ie Value-Noise/Perlin noise functions.
@@ -133,71 +120,72 @@ float fractalNoiseTwo(in vec2 p, int octaves) {
     return value / maxValue;
 }
 
+const float SPAWN_P  = 0.000001; // spawn particle 
+const float REMOVE_P = 0.0695; // remove particle
+const float BRIGHT_Z = 0.0;    // brightness on fragcolor.z
+const float SCALE_P  = 2.5;   // scale particle
 
-#define T (iTime/3e2)
-#define H(a) (cos(radians(vec3(180, 90, 0))+(a)*1.82832)*0.6+0.6)
+
+vec2 velocityV(in vec2 p) {
+    float n1 = noise(p * 3.0 - iTime * 0.5);
+    float n2 = noise(p * 3.0 + vec2(1.0) + iTime * 0.5);
+    return vec2(n1, n2) * 2.0 - 1.0;
+}
+
+vec2 velocityV1(in vec2 p) {
+    float n1 = fractalNoiseTwo(p * 3.0, 2);
+    float n2 = fractalNoiseTwo(p * 2.0, 1);
+    return vec2(n2, n1);
+}
+
+
+vec2 vField(vec2 I)
+{
+    vec2 R = iResolution.xy;
+    for(int i=-1; i<=1; i++)
+    {
+        for(int j=-1; j<=1; j++)
+        {
+            // 3x3 particle search around I
+            vec2 uv = (I + vec2(i,j)) / R.xy;
+            // Reads previous particle data from iCh
+            // if p=0 there is no particle at this location
+            vec2 p = texture(iChannel0, fract(uv)).xy;
+            // 3. Paricle Spawning
+            // When no particle exist randomly spawn one 
+            if( p == vec2(0))
+            {
+                if( hash13(vec3(I + vec2(i,j), iFrame)) > SPAWN_P) continue;
+                p = I + vec2(i,j) + hash21(float(iFrame)) - 0.5;
+            }
+            // Randomly remove particles 
+            else if(hash13(vec3(I + vec2(i,j), iFrame)) < REMOVE_P )
+            {
+                continue;
+            }
+            // get velocity vector
+            vec2 v = velocityV( uv * SCALE_P - vec2(0.5, 0.5 * R.x / R.y));
+            p += v;
+            // particles are wrapped horizontally 
+            // but are remove if offscreen
+            if(p.y < 0.0 || p.y > R.y) continue;
+            // 7. Pixel assignment
+            // If the particle current pixel is close enough to the current
+            // pixel I. this pixel gets assign that particle position
+            if(abs(p.x - I.x) < 1.0 && abs(p.y - I.y) < 0.5)
+                return p;
+        }
+    }
+    return vec2(0);
+}
 
 void mainImage( out vec4 O, in vec2 I )
 {
-    vec2 uv = I/iResolution.xy;
-    vec4 delta = texture(iChannel0, uv);
+    vec2 uv = I.xy/iResolution.xy;
     
-    float trail = delta.z;           // Main trail data
-    float redGlow = delta.x;         // Red channel as glow
-    float greenGlow = delta.y;       // Green channel as glow
-    
-    vec3 color = vec3(0.0);
-    
-    if (trail < 0.001 && redGlow < 0.001 && greenGlow < 0.001) {
-        O = vec4(0.0);
-        return;
-    }
-    
-    float t = T;
-    
-    // Enhanced trail colors (blue/white channel)
-    if (trail > 0.001) {
-        // Calculate flow direction using spatial gradients
-        vec2 texelSize   = 1.0 / iResolution.xy;
-        float trailRight = texture(iChannel0, uv + vec2(texelSize.x, 0)).z;
-        float trailLeft  = texture(iChannel0, uv - vec2(texelSize.x, 0)).z;
-        float trailUp    = texture(iChannel0, uv + vec2(0, texelSize.y)).z;
-        float trailDown  = texture(iChannel0, uv - vec2(0, texelSize.y)).z;
-        
-        vec2 gradient = vec2(trailRight - trailLeft, trailUp - trailDown);
-        float flowAngle = atan(gradient.y, gradient.x) / 3.1416 + 0.0;
-        
-        // Create base trail color using enhanced hue function
-        float hueInput = flowAngle + t * 0.126 + trail * .1934;
-        vec3 trailColor = H(hueInput);
-        
-        // Enhance trail intensity
-        float trailIntensity = smoothstep(0.0, 1.2, trail);
-        color += trailColor * trailIntensity;
-    }
-    
-    vec3 glowColor = vec3(0.0);
-   
-    
-    if (greenGlow > 0.001) { 
-        float greenIntensity = smoothstep(0.0,1.0, greenGlow * 1.);
-        glowColor.g += greenIntensity * 0.5;
-    }
-    
-    color += (glowColor);
-    color.gb += 0.01; // Boost green and blue slightly
-    
-    vec3 finalColor = color * 0.15 + color.brg * 0.36 + color * color;
-    
-    vec2 center = uv - 0.5;
-    float dist = length(center);
-    finalColor *= (1.6 - dist * 1.3);
-    
-    // Enhance contrast and brightness
-    finalColor = max(finalColor, vec3(0.0));
-    finalColor = pow(finalColor, vec3(1.3)); // Slight gamma adjustment
-    
-    O = vec4(finalColor, 1.0);
+    O.xy = vField(I);                       // find particle for this pixel
+    O.z = 0.995 * texture(iChannel0, uv).z; // trail fade
+    if(O.x > 0.0) O.z = 0.9; // if particle exsit see trail
 }
 
 void main() {

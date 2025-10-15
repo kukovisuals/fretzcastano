@@ -1,24 +1,10 @@
 uniform vec3 iResolution;
-uniform float iTime; 
+uniform float iTime;
 uniform vec4 iMouse;
 uniform sampler2D iChannel0;
 uniform sampler2D iChannel1;
-
-/*
-    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-
-    ▓              🌟  KuKo Day 91  🌟                
-
-    ▓  Learning Flow field simulation
-    
-    ▓  Great tutorial on:
-    ▓  https://wyattflanders.com/MeAndMyNeighborhood.pdf
-    
-    ▓  Added Simplex Noise
-    ▓  https://www.shadertoy.com/view/W3VGW3
-
-    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-*/
+uniform int       iFrame;  
+uniform float     iTimeDelta; 
 
 float hash(vec2 p)
 {
@@ -94,38 +80,70 @@ float noise(vec2 x, vec2 period, float alpha, out vec2 gradient) {
 }
 
 
-
 #define LOOKUP(COORD) texture(iChannel0, COORD/iResolution.xy)
+#define T iTime
+
+const float SPEED_D1 = 0.5;
+// 1: All my energy translate with my order energey
+vec4 Field(vec2 p)
+{
+    vec2 velocityGuess = LOOKUP(p).xy;
+    vec2 positionGuess = p - velocityGuess;
+    return LOOKUP(positionGuess);
+}
 
 void mainImage( out vec4 O, in vec2 I )
 {
-    vec4 field = LOOKUP(I);
-    float vel =  length(field.xy);
-    //O = vec4(vec3(vel),1.0); 
-    //O = vec4(field.y * 0.1 + 0.0, field.y*0.2+0.2, field.x *0.4+0.3, 1.0);
-
+    vec2 R = iResolution.xy;
+    // check if resolution changed
+    if(iFrame < 1 )
+    {
+        O = vec4(0.1,0.0,0.0,0.0);
+        return;
+    }
+    O = Field(I);
+    // neighborhood
+    vec4 px = Field(I + vec2(1,0));
+    vec4 py = Field(I + vec2(0,1));
+    vec4 nx = Field(I - vec2(1,0));
+    vec4 ny = Field(I - vec2(0,1));
     
-    // Beautiful grass green3
-    vec3 grassBase = vec3(0.663,0.137,0.137);
-    vec3 grassBright = vec3(0.961,0.580,0.635);
-    float grassAmount = smoothstep(-0.2, 4.0, field.y);
-    vec3 grassColor = mix(grassBase, grassBright, grassAmount);
+    // 2: disorder energy diffuses completely 
+    O.b = (px.b + py.b + nx.b + ny.b) / 4.0;
     
-    // Beautiful water blues
-    vec3 waterBase = vec3(0.020,0.173,0.420);
-    vec3 waterBright = vec3(0.882,0.925,0.957);
-    float waterAmount = smoothstep(-0.2, 4.0, field.x);
-    vec3 waterColor = mix(waterBase, waterBright, waterAmount);
+    // 3: order in the disorder energy creates order 
+    vec2 Force;
+    Force.x = nx.b - px.b;
+    Force.y = ny.b - py.b;
+    //O.xy += Force / 4.0;
     
-    // Add velocity highlights (white foam/movement)
-    vec3 velocityHighlight = vec3(0.6, 0.9, 0.9) * smoothstep(0.1, 0.9, vel);
+    vec2 NForce;
     
-    // Combine everything
-    float waterGrassMix = smoothstep(-0.1, 0.1, field.x - field.y);
-    vec3 baseColor = mix(grassColor, waterColor, waterGrassMix);
-    vec3 finalColor = mix(baseColor, velocityHighlight, vel * 0.3);
+    vec2 period = vec2(0.0); // No tiling
+    float alpha = T * 0.15; // No rotation
+    vec2 gradient;
+    //float n = noise(I * 0.01 + T * 0.1); // scale & animate noise
+    float n = noise(I * 0.0516 + vec2(T *0.61), period, alpha, gradient);
+    gradient = vec2(cos(n * 6.2831), sin(n * 6.2831)) * 0.1215; // convert noise to directional vector
+    O.xy += gradient * 0.2;
+    //O.xy += gradient * 0.011;
     
-    O = vec4(finalColor, 1.0);
+    // 4: disorder in the order energy creates disorder
+    O.b += (nx.x - px.x + ny.y - py.y) / 4.0;
+    
+    // gravity offset
+    O.y -= O.w / 300.0;
+    
+    // mass concervation 
+    O.w += (nx.x * nx.w - px.x * px.w + ny.y * ny.w - py.y * py.w)/4.0;
+    
+    //boundery conditions
+    if(I.x < 10. || I.y < 10. || R.x - I.x < 10. || R.y - I.y < 10.)
+    {
+        O.xy *= 0.0;
+    }
+    
+    
 }
 
 void main() {
