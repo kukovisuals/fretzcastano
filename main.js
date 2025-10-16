@@ -1,7 +1,9 @@
 // main.js
 import * as THREE from 'three';
-import { get, getBuffers, latestId, nextId, prevId, idsAsc } from './shaders/main.js';
+import { get, getBuffers, latestId, nextId, prevId, idsAsc, exists} from './shaders/main.js';
 import './style.css'
+
+
 
 const pad5 = (n) => String(n).padStart(5, '0');
 const coerceToId = (raw) => {
@@ -13,15 +15,15 @@ const coerceToId = (raw) => {
   return `day-${pad5(digits)}`;
 };
 
-const exists = (id) => !!get(id);
-
+//const exists = (id) => !!get(id);
 const url = new URL(location.href);
 let currentId =
-  coerceToId(url.searchParams.get('id')) ||
-  coerceToId(url.searchParams.get('day')) ||
-  coerceToId(location.hash.replace('#','')) ||
-  latestId;
+coerceToId(url.searchParams.get('id')) ||
+coerceToId(url.searchParams.get('day')) ||
+coerceToId(location.hash.replace('#','')) ||
+latestId;
 
+console.log(exists(currentId))
 if (!exists(currentId)) currentId = latestId;
                       // or any id
 // const imageCode = get(currentId);                   // final pass code
@@ -50,15 +52,6 @@ const common = {
   iFrame: { value: 0 }
 };
 
-
-addEventListener('resize', () => {
-  renderer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  common.iResolution.value.set(innerWidth, innerHeight, 1);
-  rebuild(currentId); // recreate RTs/materials for new size
-});
-
 // ---------- Buffers + Image wiring ----------
 const VERT = `void main(){ gl_Position = vec4(position,1.0); }`;
 
@@ -86,18 +79,20 @@ let ping = null;   // { A:{read,write,mat}, B:{...}, ... }
 let imgMat = null; 
 
 /** Build materials/render targets for a given day */
-
-function rebuild(dayId) {
+// replace your rebuild signature + first lines with:
+async function rebuild(dayId) {
   // dispose previous
-  if (ping) Object.values(ping).forEach(p => {
-    p?.mat?.dispose(); p?.read?.dispose(); p?.write?.dispose();
-  });
+  if (ping) Object.values(ping).forEach(p => { p?.mat?.dispose(); p?.read?.dispose(); p?.write?.dispose(); });
   imgMat?.dispose();
 
-  const imageCode = get(dayId);
-  const { A, B, C, D } = getBuffers(dayId);
-
+  // IMPORTANT: clear live refs so the loop knows to wait
   ping = {};
+  imgMat = null;
+
+  // async fetch (used to be sync)
+  const [imageCode, buffers] = await Promise.all([ get(dayId), getBuffers(dayId) ]);
+  const { A, B, C, D } = buffers;
+  // ...keep the rest of rebuild body the same, but use imageCode/A/B/C/D variables...
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2,2), null);
@@ -139,10 +134,13 @@ function rebuild(dayId) {
   rebuild.quad = quad;
 }
 
-rebuild(currentId);
-
+//rebuild(currentId);
+(async () => {
+  await show(currentId);       // preload only latest on first paint
+})();
 // ---------- Frame loop ----------
 renderer.setAnimationLoop(() => {
+  if (!imgMat || !rebuild.scene) return;
   common.iTime.value = performance.now()*0.001;
   common.iFrame.value++;
 
@@ -174,12 +172,12 @@ renderer.setAnimationLoop(() => {
   renderer.render(rebuild.scene, rebuild.camera);
 });
 
-function show(id) {
-  const code = get(id);
+async function show(id) {
+  const code = await get(id);
   if (!code) return;
   currentId = id;
   history.replaceState(null, '', `?id=${id}`);  // <- keeps linkable
-  rebuild(id);
+  await rebuild(id);
 }
 
 const $in  = document.getElementById('goto-input');
@@ -200,22 +198,37 @@ function jump(raw){
   }
 }
 
+console.log('idsAsc[0..3]', idsAsc.slice(0,4));
+console.log('latestId', latestId);
+
+// after computing currentId
+console.log('start currentId', currentId, 'exists?', exists(currentId));
+
+addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  common.iResolution.value.set(innerWidth, innerHeight, 1);
+  rebuild(currentId); // recreate RTs/materials for new size
+});
+
+
 $btn?.addEventListener('click', () => jump($in?.value));
 $in?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') jump($in.value);
 });
 
 // Allow direct hash navigation like #day-00100
-addEventListener('hashchange', () => {
+addEventListener('hashchange', async () => {
   const id = coerceToId(location.hash.replace('#',''));
-  if (id && exists(id)) show(id);
+  if (id && exists(id)) await show(id);
 });
 
-document.getElementById('next')?.addEventListener('click', () => {
+document.getElementById('next')?.addEventListener('click', async () => {
   const nid = nextId(currentId);
-  if (nid) show(nid);
+  if (nid) await show(nid);
 });
-document.getElementById('prev')?.addEventListener('click', () => {
+document.getElementById('prev')?.addEventListener('click', async () => {
   const pid = prevId(currentId);
-  if (pid) show(pid);
+  if (pid) await show(pid);
 });
