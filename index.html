@@ -1,32 +1,116 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>GLSL / Technical Artist – Daily Shaders | KuKo Visuals</title>
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="description" content="GLSL shader developer specializing in Three.js and real-time rendering. Daily shaders, lighting (GGX/IBL), SDF, and perf-focused WebGL." />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      body{
-        margin: 0;
-        font-size: 13px;
-        font-family: Arial, Helvetica, sans-serif;
+
+<head>
+  <meta charset="utf-8" />
+  <title>KuKo Visuals — GLSL Technical Artist | Daily Shaders</title>
+  <meta name="description"
+    content="KuKo Visuals: technical artist creating daily GLSL shaders. SDF, GGX/IBL lighting, real-time WebGL/Three.js, performance-focused visuals." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="canonical" href="https://fretzcastano.com/" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <meta name="theme-color" content="#000000" />
+
+  <meta property="og:title" content="KuKo Visuals — Daily GLSL Shaders" />
+  <meta property="og:description" content="Daily GLSL shaders: SDF forms, GGX/IBL, real-time WebGL." />
+  <meta property="og:url" content="https://fretzcastano.com/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="KuKo Visuals — Daily GLSL Shaders" />
+  <meta name="twitter:description" content="Daily GLSL shaders in WebGL/Three.js." />
+
+  <script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@graph":[
+    {
+      "@type":"WebSite",
+      "@id":"https://fretzcastano.com/#website",
+      "name":"KuKo Visuals",
+      "url":"https://fretzcastano.com/",
+      "description":"Daily GLSL shaders by a technical artist focusing on SDF and GGX/IBL.",
+      "publisher":{"@type":"Person","@id":"https://fretzcastano.com/#person"}
+    },
+    {
+      "@type":"Person",
+      "@id":"https://fretzcastano.com/#person",
+      "name":"KuKo Visuals",
+      "jobTitle":"Technical Artist",
+      "url":"https://fretzcastano.com/",
+      "knowsAbout":["GLSL","WebGL","Three.js","SDF","GGX","IBL","Real-time rendering"]
+    },
+    {
+      "@type":"CollectionPage",
+      "@id":"https://fretzcastano.com/#collection",
+      "name":"Daily GLSL Shaders",
+      "url":"https://fretzcastano.com/",
+      "isPartOf":{"@id":"https://fretzcastano.com/#website"},
+      "about":["GLSL","SDF","GGX/IBL","Real-time WebGL"],
+      "mainEntity":{
+        "@type":"ItemList",
+        "name":"Recent daily shaders",
+        "itemListElement":[
+          { "@type":"ListItem", "position":1, "url":"https://fretzcastano.com/?day=00001" },
+          { "@type":"ListItem", "position":2, "url":"https://fretzcastano.com/?day=00002" },
+          { "@type":"ListItem", "position":3, "url":"https://fretzcastano.com/?day=00003" }
+        ]
       }
-      * {
-        background-color: #000;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="app"></div>
-    <div class="controls">
-      <div id="prev" class="btn">Prev</div>
-      <div id="next" class="btn">Next</div>
-      <div class="goto">
-        <input id="goto-input" inputmode="numeric" placeholder="day or # e.g. 100" />
-        <button id="goto-btn" class="btn">Go</button>
-      </div>
-    </div>
-    <script type="module" src="/main.js"></script>
-  </body>
+    }
+  ]
+}
+</script>
+
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      background: #000;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    /* Invisible to users, readable to crawlers and screen readers */
+    .sr-only {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Your fullscreen shader app -->
+  <div id="app"></div>
+  <div class="controls">
+    <div id="prev" class="btn">Prev</div>
+    <div id="next" class="btn">Next</div>
+    <div class="goto"> <input id="goto-input" inputmode="numeric" placeholder="day or # e.g. 100" /> <button
+        id="goto-btn" class="btn">Go</button> </div>
+  </div>
+  <!-- Semantic, non-visible headings/keywords (safe, not spammy) -->
+  <h1 class="sr-only">KuKo Visuals — Daily GLSL Shaders by a Technical Artist</h1>
+  <p class="sr-only">
+    Daily GLSL shader studies in WebGL/Three.js: SDF modeling, GGX/IBL lighting, real-time performance,
+    procedural textures, vector fields, and fractal experiments.
+  </p>
+
+  <noscript>
+    <p style="color:#fff;max-width:50ch;margin:2rem">
+      This site renders daily GLSL shaders. Enable JavaScript to see the visuals.
+    </p>
+  </noscript>
+
+  <script type="module" src="/main.js"></script>
+</body>
+
 </html>
