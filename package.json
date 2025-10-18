@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "prebuild": "node tools/gen-sitemap.mjs",
+    "prebuild": "node scripts/gen-site-assets.cjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
