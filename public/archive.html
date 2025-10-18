@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Daily GLSL Shader Archive | KuKo Visuals</title>
+  <meta name="description" content="Text-only archive of daily GLSL shaders by KuKo Visuals." />
+  <link rel="canonical" href="https://fretzcastano.com/archive" />
+  <meta name="robots" content="index,follow" />
+  <style>
+    body{background:#000;color:#fff;font:14px/1.6 system-ui,Arial;margin:20px}
+    a{color:#9cf;text-decoration:none} a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <h1>Daily GLSL Shader Archive</h1>
+  <p>Each link loads the shader on the homepage.</p>
+  <ul id="list"></ul>
+
+  <script>
+    // Generate links from a simple range. Update MAX to your count.
+    const MAX = 300; // <-- set to your current highest day
+    const pad = n => String(n).padStart(5,'0');
+    const ul = document.getElementById('list');
+    for(let i=1;i<=MAX;i++){
+      const li=document.createElement('li');
+      const d=pad(i);
+      const a=document.createElement('a');
+      a.href=`https://fretzcastano.com/?day=${d}`;
+      a.textContent=`Day ${d}`;
+      li.appendChild(a); ul.appendChild(li);
+    }
+  </script>
+</body>
+</html>

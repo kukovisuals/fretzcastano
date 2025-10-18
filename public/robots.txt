@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fretzcastano.com/sitemap.xml
