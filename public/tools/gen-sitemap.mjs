@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 
-const site = 'https://fretzcastano.com';
+const site = 'https://www.fretzcastano.com';
 const shadersDir = join(process.cwd(), 'shaders');
 
 const files = (await fs.readdir(shadersDir))
