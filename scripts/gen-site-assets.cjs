@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const SITE = 'https://fretzcastano.com';
+const SITE = 'https://www.fretzcastano.com';
 const ROOT = process.cwd();
 const SHADERS_DIR = path.join(ROOT, 'shaders');
 const PUBLIC_DIR = path.join(ROOT, 'public');

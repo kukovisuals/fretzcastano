@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://fretzcastano.com/sitemap.xml
+Sitemap: https://www.fretzcastano.com/sitemap.xml
