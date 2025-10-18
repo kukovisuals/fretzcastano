@@ -96,12 +96,12 @@ const float FRAME_E = 0.01;
 
 const vec3  GLOW_COLOR   = vec3(0.020,0.635,0.902); 
 const float GLOW_STRENGTH= 0.040;                  
-const float GLOW_FALLOFF = 320.0;                 
+const float GLOW_FALLOFF = 220.0;                 
 
 vec2 map(vec3 p)
 {
     float cell = 4.0;
-    vec3 q    = vec3(mod((p.x) + 0.0,10.0) - 5.5, mod((p.y) + 0.0,7.0) - 2.5, mod((p.z) + 0.0,cell) - 1.5);
+    vec3 q    = vec3(mod((p.x) + 0.0,10.0) - 5., mod((p.y) + 0.0,7.0) - 3.5, mod((p.z) + 0.0,cell) - 1.5);
     vec2 id   = vec2(floor(abs(p.x) / cell), p.z);
     
     //q.xz *= R2(iTime * 0.5);
@@ -123,7 +123,7 @@ vec2 rayMarch(vec3 ro, vec3 rd)
         vec3 p = ro + rd * dt;
         float cell = 4.0;
 
-        vec3 q    = vec3(mod((p.x) + 0.0,10.0) - 5.5, mod((p.y) + 0.0,7.0) - 2.5, mod((p.z),cell) - 1.5);
+        vec3 q    = vec3(mod((p.x) + 0.0,10.0) - 5., mod((p.y) + 0.0,7.0) - 3.5, mod((p.z),cell) - 1.5);
         
         vec2 d = map(p);
         _noisePos = q;
@@ -143,7 +143,9 @@ vec2 rayMarch(vec3 ro, vec3 rd)
         float stepLen = clamp(d.x, 0.1, 0.2);          
         float fall    = 1.0 / (1.0 + dFrame*dFrame*GLOW_FALLOFF);
         float mask    = smoothstep(0.25, 0.0, abs(dFrame));
-        glow += GLOW_COLOR * (GLOW_STRENGTH * stepLen * fall * mask);
+        
+        float fogAmount = exp(-0.0005*dt*dt*dt);
+        glow += GLOW_COLOR * (GLOW_STRENGTH * stepLen * fall * mask) * fogAmount;
 
         dt += d.x;
         if( dt > FAR) break;
@@ -182,7 +184,7 @@ vec3 rustCol(float noise01, float nl, vec3 l, vec3 col, vec2 dt)
     vec3 albedo = mix(darkMet, rustOra, rust);
     //albedo = mix(albedo, stains, stain);
     albedo = mix(albedo, darkPat, stain2);
-    col = albedo * vec3(max(0., nl));
+    col = albedo * vec3(max(0.2, nl));
 
     float spot = dot(l, vec3(0, 1, 0));
     col *= smoothstep(0.3, 0.75, spot);
@@ -193,9 +195,9 @@ vec3 rustCol(float noise01, float nl, vec3 l, vec3 col, vec2 dt)
 void mainImage( out vec4 O, in vec2 I )
 {
     vec2 uv = (2.0 * I - iResolution.xy) / iResolution.y;
-    vec3 col = vec3(uv.y * .00051);//vec3(uv.y);
+    vec3 col = vec3(0);//vec3(uv.y);
     
-    vec3 ro = vec3(5.5,-2.,3.8 - iTime);
+    vec3 ro = vec3(5.,-1.5,3.8 - iTime);
     vec3 rd = normalize(vec3(uv, -1));
     
     vec2 dt = rayMarch(ro, rd);
@@ -206,7 +208,7 @@ void mainImage( out vec4 O, in vec2 I )
         
         vec3 norm = calcNormal(p);
         
-        vec3 l = normalize(vec3(-2, 2,4));
+        vec3 l = normalize(vec3(-2,2,4));
         float nl = dot(norm, l);
         
         vec4 noise = noisedFBM(_noisePos * vec3(1, 0.75, 1) * 4.0, 10, 0.95);
@@ -216,13 +218,13 @@ void mainImage( out vec4 O, in vec2 I )
         
         if(dt.y > 1.9)
         {
-            vec3 pf = p;
-            float dFrame = sdBoxFrame(pf, FRAME_B, FRAME_E);
+            //vec3 pf = p;
+            //float dFrame = sdBoxFrame(pf, FRAME_B, FRAME_E);
 
         } else {
             col = rustCol(noise01, nl, l, col, dt);
         }
-        
+        // fog 
         col = mix( col, vec3(0.0), 1.0-exp( -0.0005*dt.x*dt.x*dt.x ) );
     }
     col += glow; 
