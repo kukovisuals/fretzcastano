@@ -6,6 +6,7 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="description" content="GLSL shader developer specializing in Three.js and real-time rendering. Daily shaders, lighting (GGX/IBL), SDF, and perf-focused WebGL." />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta property="og:title" content="GLSL / Shader Developer - Technical Artist – Daily Shaders" />
     <style>
       body{
         margin: 0;
@@ -15,7 +16,47 @@
       * {
         background-color: #000;
       }
+      footer { position: absolute; bottom: 0; margin: 0 auto; padding: 16px; background-color: transparent; z-index: -10; }
     </style>
+     <!-- Structured Data (JSON-LD): Person + Website + CollectionPage (daily shaders) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "name": "KuKo Visuals",
+          "alternateName": "KuKo",
+          "url": "https://fretzcastano.com/",
+          "knowsAbout": ["GLSL","Three.js","WebGL","PBR","GGX","IBL","SDF","real-time graphics"],
+          "sameAs": [
+            "https://github.com/kukovisuals",
+            "https://www.shadertoy.com/user/kukovisuals",
+            "https://www.instagram.com/kukovisuals",
+            "https://x.com/fretzcastano"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "name": "KuKo Visuals",
+          "url": "https://fretzcastano.com/",
+          "inLanguage": "en",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://fretzcastano.com/search?q={query}",
+            "query-input": "required name=query"
+          }
+        },
+        {
+          "@type": "CollectionPage",
+          "name": "Daily GLSL Shaders",
+          "url": "https://fretzcastano.com/",
+          "description": "A daily collection of GLSL shaders with notes on techniques, lighting, and performance.",
+          "about": ["GLSL","shader developer","Three.js","WebGL","daily shaders"]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="app"></div>
@@ -27,6 +68,9 @@
         <button id="goto-btn" class="btn">Go</button>
       </div>
     </div>
+    <footer>
+      <p>© <span id="y">2025</span> KuKo Visuals — USA and Colombia</p>
+    </footer>
     <script type="module" src="/main.js"></script>
   </body>
 </html>

@@ -3,8 +3,6 @@ import * as THREE from 'three';
 import { get, getBuffers, latestId, nextId, prevId, idsAsc, exists} from './shaders/main.js';
 import './style.css'
 
-
-
 const pad5 = (n) => String(n).padStart(5, '0');
 const coerceToId = (raw) => {
   if (!raw) return null;
