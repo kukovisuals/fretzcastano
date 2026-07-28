@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cellular Automata</title>
+    <meta
+      name="description"
+      content="Building intuition for state-machine movement — the receiver's perspective, one cell at a time."
+    />
+    <meta name="tag" content="automata" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0b0b0d;
+        --surface: #131316;
+        --line: #26262b;
+        --bone: #ece7dd;
+        --dim: #8a857b;
+        --membrane: #c8a24a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--bone);
+        font-family: "Bricolage Grotesque", system-ui, sans-serif;
+        line-height: 1.6;
+      }
+      .mono { font-family: "JetBrains Mono", monospace; }
+      .wrap { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
+      a.back {
+        color: var(--dim);
+        text-decoration: none;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85rem;
+      }
+      a.back:hover { color: var(--membrane); }
+      h1 {
+        font-size: clamp(2rem, 6vw, 3.2rem);
+        line-height: 1.05;
+        margin: 28px 0 8px;
+        letter-spacing: -0.02em;
+      }
+      .lede { color: var(--dim); font-size: 1.1rem; margin-bottom: 32px; }
+      h2 {
+        margin-top: 40px;
+        font-size: 1.4rem;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 8px;
+      }
+      .note {
+        margin-top: 40px;
+        padding: 16px 18px;
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+        color: var(--dim);
+        font-size: 0.9rem;
+      }
+      .accent { color: var(--membrane); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="back" href="/">← back to gallery</a>
+
+      <h1>Cellular <span class="accent">Automata</span></h1>
+      <p class="lede">
+        A state-machine on a grid. Every cell looks at its neighbours, follows a
+        rule, and steps forward. Complex behaviour from simple, local decisions.
+      </p>
+
+      <h2>The receiver's perspective</h2>
+      <p>
+        Instead of asking "where does this cell send its state?", flip it: each
+        cell asks "what am I receiving from my neighbours this step?" Movement
+        becomes a pull, not a push — easier to reason about and easier to make
+        deterministic.
+      </p>
+
+      <h2>Birth &amp; survival rules</h2>
+      <p>
+        A cell's next state is decided by counting live neighbours and comparing
+        against a rule set — which counts cause a cell to be born, and which let
+        it survive. Change the rule set and the whole character of the system
+        changes.
+      </p>
+
+      <h2>Reading and writing without collisions</h2>
+      <p>
+        Each step reads the previous frame and writes a fresh one, so a cell
+        never reads a value that has already been updated this tick. Keeping the
+        two frames separate is what makes the simulation stable.
+      </p>
+
+      <p class="note mono">
+        ✍️ Scaffold page — replace this body with your full write-up, diagrams,
+        and interactive demos. This file lives in
+        <span class="accent">src/tutorials/automata.html</span>.
+      </p>
+    </div>
+  </body>
+</html>
