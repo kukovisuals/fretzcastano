@@ -1,0 +1,87 @@
+[
+  {
+    "slot": 1,
+    "file": "texture1.png",
+    "original": "/media/a/ad56fba948dfba9ae698198c109e71f118a54d209c0ea50d77ea546abad89c57.png"
+  },
+  {
+    "slot": 2,
+    "file": "texture2.png",
+    "original": "/media/a/85a6d68622b36995ccb98a89bbb119edf167c914660e4450d313de049320005c.png"
+  },
+  {
+    "slot": 3,
+    "file": "texture3.png",
+    "original": "/media/a/0c7bf5fe9462d5bffbd11126e82908e39be3ce56220d900f633d58fb432e56f5.png"
+  },
+  {
+    "slot": 4,
+    "file": "texture4.png",
+    "original": "/media/a/f735bee5b64ef98879dc618b016ecf7939a5756040c2cde21ccb15e69a6e1cfb.png"
+  },
+  {
+    "slot": 5,
+    "file": "texture5.jpg",
+    "original": "/media/a/92d7758c402f0927011ca8d0a7e40251439fba3a1dac26f5b8b62026323501aa.jpg"
+  },
+  {
+    "slot": 6,
+    "file": "texture6.jpg",
+    "original": "/media/a/e6e5631ce1237ae4c05b3563eda686400a401df4548d0f9fad40ecac1659c46c.jpg"
+  },
+  {
+    "slot": 7,
+    "file": "texture7.png",
+    "original": "/media/a/08b42b43ae9d3c0605da11d0eac86618ea888e62cdd9518ee8b9097488b31560.png"
+  },
+  {
+    "slot": 8,
+    "file": "texture8.jpg",
+    "original": "/media/a/bd6464771e47eed832c5eb2cd85cdc0bfc697786b903bfd30f890f9d4fc36657.jpg"
+  },
+  {
+    "slot": 9,
+    "file": "texture9.png",
+    "original": "/media/a/0a40562379b63dfb89227e6d172f39fdce9022cba76623f1054a2c83d6c0ba5d.png"
+  },
+  {
+    "slot": 10,
+    "file": "texture10.png",
+    "original": "/media/a/cb49c003b454385aa9975733aff4571c62182ccdda480aaba9a8d250014f00ec.png"
+  },
+  {
+    "slot": 11,
+    "file": "texture11.png",
+    "original": "/media/a/3083c722c0c738cad0f468383167a0d246f91af2bfa373e9c5c094fb8c8413e0.png"
+  },
+  {
+    "slot": 12,
+    "file": "texture12.jpg",
+    "original": "/media/a/cd4c518bc6ef165c39d4405b347b51ba40f8d7a065ab0e8d2e4f422cbc1e8a43.jpg"
+  },
+  {
+    "slot": 13,
+    "file": "texture13.jpg",
+    "original": "/media/a/8979352a182bde7c3c651ba2b2f4e0615de819585cc37b7175bcefbca15a6683.jpg"
+  },
+  {
+    "slot": 14,
+    "file": "texture14.jpg",
+    "original": "/media/a/10eb4fe0ac8a7dc348a2cc282ca5df1759ab8bf680117e4047728100969e7b43.jpg"
+  },
+  {
+    "slot": 15,
+    "file": "texture15.jpg",
+    "original": "/media/a/fb918796edc3d2221218db0811e240e72e340350008338b0c07a52bd353666a6.jpg"
+  },
+  {
+    "slot": 16,
+    "file": "texture16.jpg",
+    "original": "/media/a/52d2a8f514c4fd2d9866587f4d7b2a5bfa1a11a0e772077d7682deb8b3b517e5.jpg"
+  },
+  {
+    "slot": 17,
+    "file": "texture17.jpg",
+    "original": "/media/a/95b90082f799f48677b4f206d856ad572f1d178c676269eac6347631d4447258.jpg"
+  }
+]
