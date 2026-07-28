@@ -3,8 +3,87 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KuKo Visuals — Shader Archive</title>
-    <meta name="description" content="393 public shaders. A daily practice archive by KuKo Visuals." />
+
+    <!-- ============================================================= -->
+    <!-- SEO: replace kukovisuals.com with your real domain everywhere -->
+    <!-- ============================================================= -->
+
+    <!-- Primary meta -->
+    <title>KuKo Visuals — Daily GLSL Shaders &amp; Creative Coding</title>
+    <meta
+      name="description"
+      content="The shader archive of KuKo Visuals — 400+ public GLSL shaders, a new one every day. WebGL / Shadertoy creative coding and generative art, playable live in the browser."
+    />
+    <meta
+      name="keywords"
+      content="shaders, GLSL, Shadertoy, WebGL, creative coding, generative art, daily shader, fragment shader, shader artist, KuKo Visuals"
+    />
+    <meta name="author" content="KuKo Visuals" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://kukovisuals.com/" />
+    <meta name="theme-color" content="#0b0c0e" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Open Graph (Facebook, LinkedIn, Discord, Slack, Bluesky, Threads, iMessage) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="KuKo Visuals" />
+    <meta property="og:url" content="https://kukovisuals.com/" />
+    <meta property="og:title" content="KuKo Visuals — Daily GLSL Shaders" />
+    <meta
+      property="og:description"
+      content="400+ public GLSL shaders, a new one every day. WebGL creative coding you can run live in the browser."
+    />
+    <meta property="og:image" content="https://kukovisuals.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="KuKo Visuals — daily GLSL shaders" />
+
+    <!-- X / Twitter card (also triggers the large embed on Discord) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="KuKo Visuals — Daily GLSL Shaders" />
+    <meta
+      name="twitter:description"
+      content="400+ public GLSL shaders, a new one every day. WebGL creative coding you can run live in the browser."
+    />
+    <meta name="twitter:image" content="https://kukovisuals.com/og-image.jpg" />
+    <meta name="twitter:image:alt" content="KuKo Visuals — daily GLSL shaders" />
+    <!-- Add your handle to credit you when shared: -->
+    <!-- <meta name="twitter:creator" content="@yourhandle" /> -->
+
+    <!-- Structured data: tells Google & AI answer engines who/what this is -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://kukovisuals.com/#website",
+          "url": "https://kukovisuals.com/",
+          "name": "KuKo Visuals",
+          "description": "A daily archive of public GLSL shaders by KuKo Visuals.",
+          "inLanguage": "en"
+        },
+        {
+          "@type": "Person",
+          "@id": "https://kukovisuals.com/#person",
+          "name": "KuKo Visuals",
+          "url": "https://kukovisuals.com/",
+          "jobTitle": "Shader Artist & Creative Developer",
+          "knowsAbout": ["GLSL", "WebGL", "Shaders", "Creative Coding", "Generative Art"],
+          "sameAs": ["https://www.shadertoy.com/user/kukovisuals"]
+        },
+        {
+          "@type": "CollectionPage",
+          "@id": "https://kukovisuals.com/#gallery",
+          "url": "https://kukovisuals.com/",
+          "name": "KuKo Visuals — Shader Archive",
+          "about": { "@id": "https://kukovisuals.com/#person" },
+          "isPartOf": { "@id": "https://kukovisuals.com/#website" }
+        }
+      ]
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,7 +92,27 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      Crawlable fallback. Search engines and AI crawlers that don't run
+      JavaScript read this text; the React app replaces it on load.
+    -->
+    <div id="root">
+      <main style="max-width: 720px; margin: 12vh auto; padding: 0 24px; font-family: system-ui, sans-serif; color: #e9e5da; background: #0b0c0e;">
+        <h1>KuKo Visuals — Daily GLSL Shaders</h1>
+        <p>
+          KuKo Visuals is a daily practice archive of 400+ public GLSL shaders —
+          WebGL and Shadertoy creative coding, generative art, and fragment
+          shaders, with a new piece published every day. Each shader runs live
+          in the browser.
+        </p>
+        <p>
+          Explore the full archive on
+          <a href="https://www.shadertoy.com/user/kukovisuals">Shadertoy</a>.
+          Loading the interactive gallery… if it doesn't appear, enable
+          JavaScript.
+        </p>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

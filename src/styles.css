@@ -497,3 +497,101 @@ html, body {
   padding: 3px 8px;
   border-radius: 6px;
 }
+
+/* ---------------- boot loader ---------------- */
+
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+.loader-leaving { opacity: 0; pointer-events: none; }
+
+.loader-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Darken + vignette the shader so the counter stays readable. */
+.loader-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 50%, transparent 30%, rgba(11, 12, 14, 0.72) 100%),
+    rgba(11, 12, 14, 0.28);
+}
+
+.loader-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 24px;
+}
+
+.loader-brand {
+  font-size: 0.8rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.loader-count {
+  font-size: clamp(4rem, 16vw, 8rem);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--bone);
+  text-shadow: 0 0 40px rgba(82, 214, 195, 0.35);
+}
+.loader-pct {
+  font-size: 0.32em;
+  color: var(--membrane);
+  margin-left: 6px;
+  vertical-align: super;
+}
+
+.loader-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--membrane);
+}
+.loader-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--membrane);
+  box-shadow: 0 0 12px var(--membrane);
+  animation: loader-pulse 1.1s ease-in-out infinite;
+}
+@keyframes loader-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.7); }
+}
+
+.loader-bar {
+  width: min(320px, 70vw);
+  height: 2px;
+  margin-top: 8px;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.loader-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--rim), var(--membrane));
+  transition: width 0.12s linear;
+}

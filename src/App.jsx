@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import ShaderCard from "./components/ShaderCard.jsx";
 import PlayerModal from "./components/PlayerModal.jsx";
 import Tutorials from "./components/Tutorials.jsx";
+import Loader from "./components/Loader.jsx";
 import { tutorials } from "./lib/tutorials.js";
 import { addFromJson, localMeta } from "./lib/localShaders.js";
 
@@ -36,6 +37,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [locals, setLocals] = useState(() => localMeta());
   const [notice, setNotice] = useState(null);
+  const [booting, setBooting] = useState(true);
   const fileRef = useRef(null);
 
   const onAddFile = async (e) => {
@@ -111,6 +113,9 @@ export default function App() {
 
   return (
     <div className="app">
+      {booting && (
+        <Loader ready={index !== null} onFinish={() => setBooting(false)} />
+      )}
       <header className="masthead">
         <nav className="mainnav" aria-label="Primary">
           <button
@@ -293,9 +298,10 @@ export default function App() {
           {index && !index.error && visible.length === 0 && (
             <p className="status">No shaders match. Clear the search or tag filter.</p>
           )}
-          {visible.map((s) => (
-            <ShaderCard key={s.id} shader={s} onOpen={() => setOpenId(s.id)} />
-          ))}
+          {!booting &&
+            visible.map((s) => (
+              <ShaderCard key={s.id} shader={s} onOpen={() => setOpenId(s.id)} />
+            ))}
         </main>
       )}
 

@@ -1,0 +1,16 @@
+# KuKo Visuals — allow everything, including AI answer-engine crawlers.
+User-agent: *
+Allow: /
+
+# Explicitly welcome AI crawlers (they read raw HTML, no JS) so your work
+# shows up in ChatGPT / Claude / Perplexity / Google AI answers.
+User-agent: GPTBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://kukovisuals.com/sitemap.xml
