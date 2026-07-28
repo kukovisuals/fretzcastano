@@ -1,0 +1,172 @@
+{
+ "ver": "0.1",
+ "info": {
+  "id": "tfKczy",
+  "date": "1764880172",
+  "viewed": 96,
+  "name": "KuKo #225",
+  "description": "reaction-diffusion system",
+  "likes": 11,
+  "published": "Public API",
+  "usePreview": 0,
+  "tags": [
+   "diffusion",
+   "laplacian",
+   "reaction",
+   "grayscott"
+  ],
+  "hasliked": 0,
+  "parentid": "wcGcDm",
+  "parentname": "KuKo #224"
+ },
+ "renderpass": [
+  {
+   "inputs": [
+    {
+     "id": "XdfGR8",
+     "filepath": "/media/previz/buffer03.png",
+     "type": "buffer",
+     "channel": 0,
+     "sampler": {
+      "filter": "linear",
+      "wrap": "clamp",
+      "vflip": "true",
+      "srgb": "false",
+      "internal": "byte"
+     },
+     "published": 1
+    }
+   ],
+   "outputs": [
+    {
+     "id": "4dfGRr",
+     "channel": 0
+    }
+   ],
+   "code": "/*\n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n        \n    ▓              🌟  KuKo Day 225  🌟  \n    \n    ▓ Added mouse control \n    \n    ▓ Paper\n    ▓ https://itp.uni-frankfurt.de/~gros/StudentProjects/Projects_2020/projekt_schulz_kaefer/\n    \n    ▓ paint something with ur mouse?\n    \n    ▓ With the unofficial plugin increase the paint calls ! \n    \n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n*/\n\n/*\nvoid mainImage( out vec4 O, in vec2 I )\n{\n    vec2 uv = I/iResolution.xy;\n\n    vec4 st = texture(iChannel0, uv);\n    \n    O = 1. - st.yyww;\n}\n*/\n\n// Light by @Shane\n// https://www.shadertoy.com/view/XsG3z1\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord){\n\n    \n    // The screen coordinates.\n    vec2 uv = fragCoord/iResolution.xy;\n    \n    // Read in the blurred pixel value. There's no rule that says you can't read in the\n    // value in the \"X\" channel, but blurred stuff is easier to bump, that's all.\n    float c = 1. - texture(iChannel0, uv).y; \n    // Reading in the same at a slightly offsetted position. The difference between\n    // \"c2\" and \"c\" is used to provide the highlighting.\n    float c2 = 1. - texture(iChannel0, uv + .5/iResolution.xy).y;\n    \n\n    // Color the pixel by mixing two colors in a sinusoidal kind of pattern.\n    float pattern = -cos(uv.x*1.75*3.14159 - .9)*cos(uv.y*1.5*3.14159 - .75)*.5 + .5;\n    \n    // Blue and gold, for an abstract sky over a... wheat field look. Very artsy. :)\n    vec3 col = pow(vec3(0.039,0.039,0.043)*c,vec3(1.5, 1, 1));\n    col = mix(col, col.zyx, clamp(pattern - .2, 0., 1.) );\n    \n    // Extra color variations.\n    //vec3 col = mix(vec3(c*1.2, pow(c, 8.), pow(c, 2.)), vec3(c*1.3, pow(c, 2.), pow(c, 10.)), pattern );\n\t//vec3 col = mix(vec3(c*1.3, c*c, pow(c, 10.)), vec3(c*c*c, c*sqrt(c), c), pattern );\n    \n    // Adding the highlighting. Not as nice as proper bump mapping, but still pretty effective.\n    col += vec3(0.165,0.957,0.941)*max(c2*c2 - c*c, 0.)*10.;\n\n    // Apply a vignette and increase the brightness for that fake spotlight effect.\n    col *= pow( 18.0*uv.x*uv.y*(1. - uv.x)*(1. - uv.y) ,1.125)*.615;\n    \n    // Fade in for the first few seconds.\n    col *= smoothstep(0., 1., iTime/5.);\n\n    // Rough gamma correction.\n    fragColor = vec4(sqrt(min(col, 1.)), 1); \n\n    \n}",
+   "name": "Image",
+   "description": "",
+   "type": "image"
+  },
+  {
+   "inputs": [
+    {
+     "id": "XdfGR8",
+     "filepath": "/media/previz/buffer03.png",
+     "type": "buffer",
+     "channel": 0,
+     "sampler": {
+      "filter": "linear",
+      "wrap": "clamp",
+      "vflip": "true",
+      "srgb": "false",
+      "internal": "byte"
+     },
+     "published": 1
+    }
+   ],
+   "outputs": [
+    {
+     "id": "4dXGR8",
+     "channel": 0
+    }
+   ],
+   "code": "void mainImage(out vec4 O, in vec2 I) \n{\n    vec2 uv = I / iResolution.xy;\n\n    vec4 state = grayScott(I, iChannel0, iResolution.xy, iTime, iFrame);\n    float u = state.x;\n    float v = state.y;\n\n    // 2) Moving circle center (goes up and down)\n    float speed = 1.0;\n    float t = mod(iTime * speed, 4.0); \n    \n    vec2 A = vec2(0.5, 0.9);  // top-left\n    vec2 B = vec2(0.3, 0.7);  // bottom center\n    vec2 C = vec2(0.5, 0.5);  // top-right\n\n    vec2 k11;\n    if (t < 2.0) {\n        // First half: bottom-left to top (left side of V)\n        float progress = t / 2.0;\n        k11 = mix(A, B, progress);\n    } else {\n        // Second half: top to bottom-right (right side of V)\n        float progress = (t - 2.0) / 2.0;\n        k11 = mix(B, C, progress);\n    }\n    \n    float t2 = mod(iTime * speed, 6.0);\n    vec2 A1 = vec2(0.6, 0.9);      // top of left side\n    vec2 B1 = vec2(0.6, 0.6);   // bottom left corner\n    vec2 C1 = vec2(0.8, 0.6); // bottom right corner\n    vec2 D1 = vec2(0.8, 0.9);    // top of right side\n    \n    vec2 u1;\n    if (t2 < 2.0) {\n        // Down the left side\n        float progress = t2 / 2.0;\n        u1 = mix(A1, B1, progress);\n    } else if (t2 < 4.0) {\n        // Across the bottom\n        float progress = (t2 - 2.0) / 2.0;\n        u1 = mix(B1, C1, progress);\n    } else {\n        // Up the right side\n        float progress = (t2 - 4.0) / 2.0;\n        u1 = mix(C1, D1, progress);\n    }\n    \n    vec2 A2 = vec2(0.6, 0.5);  // top-left\n    vec2 B2 = vec2(0.8, 0.3);  // bottom center\n    vec2 C2 = vec2(0.6, 0.1);  // top-right\n\n    vec2 k22;\n    if (t < 2.0) {\n        // First half: bottom-left to top (left side of V)\n        float progress = t / 2.0;\n        k22 = mix(A2, B2, progress);\n    } else {\n        // Second half: top to bottom-right (right side of V)\n        float progress = (t - 2.0) / 2.0;\n        k22 = mix(B2, C2, progress);\n    }\n    \n    vec2 k1 = vec2(0.3, 0.7 + 0.2 * sin(iTime * speed));\n    //vec2 u1 = vec2(0.7, 0.7 + 0.2 * sin(iTime * speed));\n    vec2 o1 = vec2(0.4 + 0.12 * cos(iTime * speed), 0.25 + 0.16 * sin(iTime * speed));\n    vec2 k2 = vec2(0.8, 0.3 + 0.2 * sin(iTime * speed));\n\n    float radius = 0.015;\n    float d1 = length(uv - k1); float d11 = length(uv - k11);\n    float d2 = length(uv - u1);\n    \n    float d3 = length(uv - k2);float d33 = length(uv - k22);\n    float d4 = length(uv - o1);\n   \n    float disk1 = smoothstep(radius, radius - 0.01, d1);float disk11 = smoothstep(radius, radius - 0.01, d11); \n    float disk2 = smoothstep(radius, radius - 0.01, d2);\n    float disk3 = smoothstep(radius, radius - 0.01, d3);float disk33 = smoothstep(radius, radius - 0.01, d33); \n    float disk4 = smoothstep(radius, radius - 0.01, d4);\n\n    // 3) Mouse seeding\n    if (iFrame > 9 && length(iMouse.xy - I) < 10.0) {\n        u = 0.25;\n        v = 0.5;\n    }\n\n    if (iFrame > 9) {\n        // you can tune these values\n        float uTarget = 0.25;\n        float vTarget = 0.8;\n\n        u -= disk1 * 0.05; v += disk1 * 0.05;u -= disk11 * 0.05; v += disk11 * 0.05;\n        u -= disk2 * 0.05; v += disk2 * 0.05;\n        u -= disk3 * 0.05; v += disk3 * 0.05;u -= disk33 * 0.05; v += disk33 * 0.05;\n        u -= disk4 * 0.05; v += disk4 * 0.05;\n    }\n\n    O = vec4(clamp(u, 0.0, 1.0), clamp(v, 0.0, 1.0), 0.0, 0.0);\n}\n",
+   "name": "Buffer A",
+   "description": "",
+   "type": "buffer"
+  },
+  {
+   "inputs": [],
+   "outputs": [],
+   "code": "// Noise \nvec3 hash33(in vec2 p) { \n    float n = sin(dot(p, vec2(41, 289)));    \n    return fract(vec3(2097152, 262144, 32768) * n); \n}\n\n// Discrete Laplacian operator: ∇²u ≈ (neighbors - 4×center)\n// Measures local curvature of the concentration field\nvec2 laplacian(in vec2 uv, vec2 px, sampler2D ch) \n{   \n    vec2 c = texture(ch, uv).xy;                    // Center\n    \n    vec2 r = texture(ch, uv + vec2(px.x, 0)).xy;    // Right\n    vec2 l = texture(ch, uv - vec2(px.x, 0)).xy;    // Left\n    vec2 u = texture(ch, uv + vec2(0, px.y)).xy;    // Up\n    vec2 d = texture(ch, uv - vec2(0, px.y)).xy;    // Down\n   \n    return (r + l + u + d - 4.0 * c);\n}\n\nvec2 laplacianAniso(in vec2 uv, vec2 px, sampler2D ch)\n{\n    vec2 c = texture(ch, uv).xy;\n\n    // 1) Define a vector field: here, tangent to circles around center\n    vec2 p = uv - 0.5;\n    float r = max(length(p), 1e-3);\n    vec2 t = normalize(vec2(-p.y, p.x));   // tangent direction\n    vec2 n = vec2(-t.y, t.x);              // normal direction\n\n    float h = px.x;                         // step size (assuming near-square res)\n    vec2 tstep = t * h;\n    vec2 nstep = n * h;\n\n    // 2) Sample along tangent and normal\n    vec2 utp = texture(ch, uv + tstep).xy;\n    vec2 utm = texture(ch, uv - tstep).xy;\n    vec2 unp = texture(ch, uv + nstep).xy;\n    vec2 unm = texture(ch, uv - nstep).xy;\n\n    vec2 u_tt = utp + utm - 2.0 * c;       // second deriv along t\n    vec2 u_nn = unp + unm - 2.0 * c;       // second deriv along n\n\n    // 3) Weights: more diffusion along t than n\n    float a = 2.;   // along flow\n    float b = 0.2;   // across flow\n\n    return a * u_tt + b * u_nn;\n}\n\n// ═══════════════════════════════════════════════════════════════════════════\n// Gray-Scott Reaction-Diffusion System\n// ═══════════════════════════════════════════════════════════════════════════\n// A mathematical model of two chemicals U and V that react and diffuse\n// Creates self-organizing patterns: spots, stripes, spirals, chaos\n//\n// The system equations:\n//   ∂u/∂t = Du∇²u - uv² + f(1-u)\n//   ∂v/∂t = Dv∇²v + uv² - (k+f)v\n//\n// Where:\n//   u, v     = concentrations of chemicals A and B\n//   Du, Dv   = diffusion rates (how fast chemicals spread)\n//   f        = feed rate (replenishment of u)\n//   k        = kill rate (removal of v)\n//   uv²      = reaction term (v is produced by consuming u)\n// ═══════════════════════════════════════════════════════════════════════════\n\nvec4 grayScott(in vec2 I, sampler2D ch, vec2 res, float time, int frame) \n{\n    vec2 uv = I / res;\n    vec2 px = 1.0 / res;\n    \n    // Current chemical concentrations\n    float u = texture(ch, uv).x;  // Chemical A\n    float v = texture(ch, uv).y;  // Chemical B\n    \n    // Calculate spatial derivatives (laplacian)\n    vec2 lapIso  = laplacian(uv, px, ch);\n    vec2 lapAniso = laplacianAniso(uv, px, ch);\n\n    // Blend to keep it stable but clearly anisotropic\n    vec2 lap = mix(lapIso, lapAniso, 0.7);\n\n    // ───────────────────────────────────────────────────────────────────────\n    // Parameters (tune these to create different patterns)\n    // ───────────────────────────────────────────────────────────────────────\n    float Du = 0.2097;      // Diffusion rate for U (faster)\n    float Dv = 0.075;       // Diffusion rate for V (slower)\n    float f  = 0.06;        // Feed rate (adds U)\n    float k  = 0.065;       // Kill rate (removes V)\n    \n    // ───────────────────────────────────────────────────────────────────────\n    // The reaction term: uv²\n    // Chemical V catalyzes its own production by consuming U\n    // ───────────────────────────────────────────────────────────────────────\n    float uvv = u * v * v;\n    \n    // Chemical U (substrate):\n    float newU = u \n               + Du * lap.x       // Du ∇²u\n               - uvv              // - uv²\n               + f * (1.0 - u);   // + f(1-u)\n    \n    // Chemical V (autocatalyst):\n    float newV = v \n               + Dv * lap.y       // Dv ∇²v\n               + uvv              // + uv²\n               - (k + f) * v;     // - (k+f)v\n    \n    // ───────────────────────────────────────────────────────────────────────\n    // Stochastic perturbation\n    // ───────────────────────────────────────────────────────────────────────\n    vec3 noise = hash33(uv + vec2(53, 43) * time);\n    newU += (noise.x - 0.5) * 0.0001;\n    newV += (noise.y - 0.5) * 0.0001;\n    \n    // ───────────────────────────────────────────────────────────────────────\n    // Init\n    // ───────────────────────────────────────────────────────────────────────\n    if(frame < 10)\n    {\n        vec2 center = uv - 0.5;\n        \n        float dist = smoothstep(0.43, 0.3, length(center) - 0.5);\n        float spot = smoothstep(0.15, 0.1, dist);\n        \n        return vec4(1.0, spot * 0.5 + noise.z * 0.05, 0.0, 0.0);\n    }\n    else \n    {\n        return vec4(clamp(newU, 0., 1.), clamp(newV, 0., 1.), 0.0, 0.0);\n    }\n}",
+   "name": "Common",
+   "description": "",
+   "type": "common"
+  },
+  {
+   "inputs": [
+    {
+     "id": "4dXGR8",
+     "filepath": "/media/previz/buffer00.png",
+     "type": "buffer",
+     "channel": 0,
+     "sampler": {
+      "filter": "linear",
+      "wrap": "clamp",
+      "vflip": "true",
+      "srgb": "false",
+      "internal": "byte"
+     },
+     "published": 1
+    }
+   ],
+   "outputs": [
+    {
+     "id": "XsXGR8",
+     "channel": 0
+    }
+   ],
+   "code": "void mainImage(out vec4 O, in vec2 I) \n{\n    O = grayScott(I, iChannel0, iResolution.xy, iTime, iFrame);\n    \n    // Interactive seeding - click to add chemical V\n    bool mouseActive = length(iMouse.xy - I) < 10.0;\n    if(mouseActive && iFrame > 9) {\n        O = vec4(0.25, 0.5, 0.0, 0.0);  // Seed reaction at cursor\n    }\n}",
+   "name": "Buffer B",
+   "description": "",
+   "type": "buffer"
+  },
+  {
+   "inputs": [
+    {
+     "id": "XsXGR8",
+     "filepath": "/media/previz/buffer01.png",
+     "type": "buffer",
+     "channel": 0,
+     "sampler": {
+      "filter": "linear",
+      "wrap": "clamp",
+      "vflip": "true",
+      "srgb": "false",
+      "internal": "byte"
+     },
+     "published": 1
+    }
+   ],
+   "outputs": [
+    {
+     "id": "4sXGR8",
+     "channel": 0
+    }
+   ],
+   "code": "void mainImage(out vec4 O, in vec2 I) \n{\n    O = grayScott(I, iChannel0, iResolution.xy, iTime, iFrame);\n    \n    // Interactive seeding - click to add chemical V\n    bool mouseActive = length(iMouse.xy - I) < 10.0;\n    if(mouseActive && iFrame > 9) {\n        O = vec4(0.25, 0.5, 0.0, 0.0);  // Seed reaction at cursor\n    }\n}",
+   "name": "Buffer C",
+   "description": "",
+   "type": "buffer"
+  },
+  {
+   "inputs": [
+    {
+     "id": "4dXGR8",
+     "filepath": "/media/previz/buffer00.png",
+     "type": "buffer",
+     "channel": 0,
+     "sampler": {
+      "filter": "linear",
+      "wrap": "clamp",
+      "vflip": "true",
+      "srgb": "false",
+      "internal": "byte"
+     },
+     "published": 1
+    }
+   ],
+   "outputs": [
+    {
+     "id": "XdfGR8",
+     "channel": 0
+    }
+   ],
+   "code": "void mainImage(out vec4 O, in vec2 I) \n{\n    O = grayScott(I, iChannel0, iResolution.xy, iTime, iFrame);\n    \n    // Interactive seeding - click to add chemical V\n    bool mouseActive = length(iMouse.xy - I) < 10.0;\n    if(mouseActive && iFrame > 9) {\n        O = vec4(0.25, 0.5, 0.0, 0.0);  // Seed reaction at cursor\n    }\n}",
+   "name": "Buffer D",
+   "description": "",
+   "type": "buffer"
+  }
+ ]
+}
