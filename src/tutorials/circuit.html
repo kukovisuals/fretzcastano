@@ -1,106 +1,573 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Circuit Worlds</title>
-    <meta
-      name="description"
-      content="Signals that travel, gate, and loop — automata rules tuned to behave like living wiring."
-    />
-    <meta name="tag" content="circuit" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=JetBrains+Mono:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --bg: #0b0b0d;
-        --surface: #131316;
-        --line: #26262b;
-        --bone: #ece7dd;
-        --dim: #8a857b;
-        --membrane: #c8a24a;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--bone);
-        font-family: "Bricolage Grotesque", system-ui, sans-serif;
-        line-height: 1.6;
-      }
-      .mono { font-family: "JetBrains Mono", monospace; }
-      .wrap { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
-      a.back {
-        color: var(--dim);
-        text-decoration: none;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.85rem;
-      }
-      a.back:hover { color: var(--membrane); }
-      h1 {
-        font-size: clamp(2rem, 6vw, 3.2rem);
-        line-height: 1.05;
-        margin: 28px 0 8px;
-        letter-spacing: -0.02em;
-      }
-      .lede { color: var(--dim); font-size: 1.1rem; margin-bottom: 32px; }
-      h2 {
-        margin-top: 40px;
-        font-size: 1.4rem;
-        border-bottom: 1px solid var(--line);
-        padding-bottom: 8px;
-      }
-      .note {
-        margin-top: 40px;
-        padding: 16px 18px;
-        border: 1px dashed var(--line);
-        border-radius: 10px;
-        color: var(--dim);
-        font-size: 0.9rem;
-      }
-      .accent { color: var(--membrane); }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <a class="back" href="/">← back to gallery</a>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One tick of the wire automaton — a graph walk</title>
+<style>
+  :root{
+    --bg:      #161513;
+    --ink:     #d6d2c8;
+    --dim:     #8f8a7e;
+    --accent:  #e59470;
+    --accent2: #9fb8a8;
+    --codebg:  #1e1c19;
+    --edge:    #2e2b26;
+    --trail:   #5c4130;
+    --born:    #7fc98f;
+    --dead:    #d97b7b;
+  }
+  *{ box-sizing:border-box; }
+  html{ background:var(--bg); }
+  body{
+    margin:0; color:var(--ink);
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size:15px; line-height:1.7;
+  }
+  main{ max-width:46rem; margin:0 auto; padding:3.5rem 1.25rem 6rem; }
+  h1{ font-size:1.7rem; line-height:1.3; font-weight:700; margin:0 0 .25rem; }
+  .byline{ color:var(--dim); margin-bottom:2.5rem; }
+  h2{ font-size:1.15rem; margin:3rem 0 1rem; color:var(--accent); font-weight:700; }
+  h2::before{ content:"## "; color:var(--edge); }
+  p{ margin:1rem 0; }
+  strong{ color:#fff; }
+  em{ color:var(--accent2); }
+  figure{ margin:1.5rem 0; text-align:center; }
+  figcaption{ color:var(--dim); font-style:italic; font-size:.85rem; margin-top:.6rem; }
+  .note{ border-left:3px solid var(--accent2); background:var(--codebg);
+         padding:.7rem 1rem; margin:1.25rem 0; font-size:.9rem; }
+  .note b{ color:var(--accent2); }
 
-      <h1>Circuit <span class="accent">Worlds</span></h1>
-      <p class="lede">
-        Take an automaton, tune its rules, and signals start to flow like current
-        through wire — travelling, branching, and looping on a grid.
-      </p>
+  /* ---------- the graph spine ---------- */
+  .graph{ position:relative; margin:2rem 0; padding-left:2.1rem; }
+  .graph::before{
+    content:""; position:absolute; left:.65rem; top:0; bottom:0; width:4px;
+    background:var(--trail); border-radius:2px;
+  }
+  .graph::after{ /* the head crawling down the wire */
+    content:""; position:absolute; left:calc(.65rem - 3px); top:0; width:10px; height:10px;
+    background:var(--accent); border-radius:2px;
+    animation:crawl 14s linear infinite;
+  }
+  @keyframes crawl{ from{ top:0; } to{ top:calc(100% - 10px); } }
+  @media (prefers-reduced-motion: reduce){
+    .graph::after{ animation:none; top:0; }
+    .flip .f2{ display:none; } .flip .f1{ opacity:1 !important; animation:none; }
+    .flip .f2{ animation:none; }
+  }
+  .node{ position:relative; background:var(--codebg); border:1px solid var(--edge);
+         border-radius:6px; padding:1rem 1.1rem 1.2rem; margin:0 0 1.6rem; }
+  .node::before{
+    content:""; position:absolute; left:-1.55rem; top:1.15rem; width:1rem; height:4px;
+    background:var(--trail);
+  }
+  .node .tag{ font-size:.72rem; letter-spacing:.08em; color:var(--dim); text-transform:uppercase; }
+  .node h3{ margin:.15rem 0 .6rem; font-size:1rem; color:#fff; font-weight:700; }
+  .node .cap{ color:var(--dim); font-size:.85rem; font-style:italic; text-align:center; margin-top:.6rem; }
+  .node p{ font-size:.9rem; margin:.6rem 0; }
 
-      <h2>Signals as moving state</h2>
-      <p>
-        A signal is just a small pattern of live cells that the rules push along
-        a track. The track constrains where the pattern can go; the rules decide
-        how fast and in which direction it moves.
-      </p>
+  /* ---------- mini grids ---------- */
+  .g{ display:grid; gap:3px; justify-content:center; margin:0 auto; }
+  .g i{ display:flex; align-items:center; justify-content:center;
+        width:34px; height:34px; font-style:normal; font-size:1.05rem;
+        background:#141311; border:1px solid var(--edge); color:var(--dim);
+        border-radius:2px; position:relative; }
+  .g i.t   { background:var(--trail); border-color:var(--trail); }
+  .g i.h   { background:var(--accent); border-color:var(--accent); color:#161513; font-weight:700; }
+  .g i.q   { background:#000; color:#fff; font-weight:700; }
+  .g i.born{ background:var(--accent); border-color:#fff; color:#161513; font-weight:700; }
+  .g i.look{ box-shadow:inset 0 0 0 2px var(--accent2); }
+  .g i.claim{ box-shadow:inset 0 0 0 2px var(--born); }
+  .g i.bad { box-shadow:inset 0 0 0 2px var(--dead); }
+  .g i.dim { opacity:.35; }
+  .g i .pct{ position:absolute; bottom:-1.2rem; left:50%; transform:translateX(-50%);
+             font-size:.62rem; color:var(--accent2); white-space:nowrap; }
+  .row{ display:flex; flex-wrap:wrap; gap:1.2rem 1.8rem; justify-content:center; align-items:flex-start; margin:.8rem 0 .2rem; }
+  .row .lab{ font-size:.75rem; color:var(--dim); text-align:center; margin-top:.5rem; }
+  .arrowdown{ text-align:center; color:var(--dim); font-size:1rem; margin:.2rem 0; }
 
-      <h2>Gates from geometry</h2>
-      <p>
-        Where two tracks meet, the local neighbourhood determines whether a
-        signal passes, blocks, or triggers a new one. Logic emerges purely from
-        the shape of the wiring and the counting rule — no special-case code.
-      </p>
+  /* two-frame flip animation */
+  .flip{ position:relative; display:inline-block; }
+  .flip .f1,.flip .f2{ }
+  .flip .f2{ position:absolute; inset:0; opacity:0; animation:fB 2.4s steps(1) infinite; }
+  .flip .f1{ animation:fA 2.4s steps(1) infinite; }
+  @keyframes fA{ 0%,49%{opacity:1;} 50%,100%{opacity:0;} }
+  @keyframes fB{ 0%,49%{opacity:0;} 50%,100%{opacity:1;} }
 
-      <h2>Keeping loops alive</h2>
-      <p>
-        A closed track can carry a signal forever if the rule set preserves it
-        each lap. Get the timing right and you have memory — a value that
-        persists by circulating rather than being stored in place.
-      </p>
+  /* legend */
+  .legend .g i{ width:40px; height:40px; }
 
-      <p class="note mono">
-        ✍️ Scaffold page — replace this body with your full write-up, diagrams,
-        and interactive demos. This file lives in
-        <span class="accent">src/tutorials/circuit.html</span>.
-      </p>
+  /* tally readout */
+  .readout{ text-align:center; margin-top:.7rem; font-size:.95rem; }
+  .readout b.ok{ color:var(--born); } .readout b.no{ color:var(--dead); }
+
+  /* demos */
+  canvas.demo{ width:100%; display:block; border:1px solid var(--edge); border-radius:4px;
+               background:#000; cursor:pointer; image-rendering:pixelated; }
+  .controls{ display:flex; flex-wrap:wrap; gap:.6rem 1.2rem; align-items:center;
+             margin:.8rem 0; font-size:.85rem; color:var(--dim); }
+  .controls label{ display:flex; gap:.5rem; align-items:center; }
+  .controls button{ font:inherit; color:var(--ink); background:var(--codebg);
+                    border:1px solid var(--edge); border-radius:3px; padding:.2rem .7rem; cursor:pointer; }
+  .controls button:hover{ border-color:var(--accent); color:var(--accent); }
+  input[type=range]{ accent-color:var(--accent); }
+  input[type=checkbox]{ accent-color:var(--accent); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  @media (max-width:430px){ .g i{ width:28px; height:28px; font-size:.9rem; } .legend .g i{ width:32px; height:32px; } }
+</style>
+</head>
+<body>
+<main>
+
+<h1>One tick of the wire automaton</h1>
+<p class="byline">Your screenshot &mdash; <em>one arrival &rarr; born, two arrivals &rarr; nothing, two nets one gap</em> &mdash; is the whole machine. This page walks the decision every pixel makes each frame, as a graph: one node per rule, one picture per node. Words stay short; the pictures do the explaining. At the bottom, the full automaton runs live with a claim microscope.</p>
+
+<h2>0. The five things a pixel can be</h2>
+
+<p>Every pixel stores one small number. That number is a <strong>costume</strong>:</p>
+
+<figure class="legend">
+  <div class="row">
+    <div><div class="g" style="grid-template-columns:40px"><i></i></div><div class="lab">empty<br>value 0</div></div>
+    <div><div class="g" style="grid-template-columns:40px"><i class="t"></i></div><div class="lab">trail (net)<br>value 1</div></div>
+    <div><div class="g" style="grid-template-columns:repeat(4,40px)"><i class="h">&rarr;</i><i class="h">&larr;</i><i class="h">&uarr;</i><i class="h">&darr;</i></div><div class="lab">heads &mdash; values 2, 3, 4, 5<br><em>value minus 2 = direction</em></div></div>
+  </div>
+  <figcaption>A head is not "on". A head is "on, and moving that way". The direction is baked into the number.</figcaption>
+</figure>
+
+<div class="note"><b>Receiver's perspective.</b> A head never writes into the cell ahead of it &mdash; it can't; every pixel only writes itself. Movement happens because the <em>empty</em> cell ahead looks backwards, sees a head aimed at it, and dresses up as the next head. The old head undresses into trail. Two pixels acting alone = one thing appearing to move.</figcaption></div>
+
+<h2>1. The tick, as a graph</h2>
+
+<div class="graph">
+
+<!-- NODE A -->
+<div class="node">
+  <div class="tag">every pixel &middot; first act</div>
+  <h3>If I'm a head, I become trail</h3>
+  <figure style="margin:.6rem 0 0">
+    <div class="flip">
+      <div class="f1">
+        <div class="g" style="grid-template-columns:repeat(3,34px)"><i class="t"></i><i class="h">&rarr;</i><i></i></div>
+        <div class="lab">this tick</div>
+      </div>
+      <div class="f2">
+        <div class="g" style="grid-template-columns:repeat(3,34px)"><i class="t"></i><i class="t"></i><i class="h">&rarr;</i></div>
+        <div class="lab">next tick</div>
+      </div>
     </div>
-  </body>
+    <div class="cap">The head always dies into brown. Whether anything is born ahead is the rest of the graph.</div>
+  </figure>
+</div>
+
+<!-- NODE B -->
+<div class="node">
+  <div class="tag">the loop &middot; four looks</div>
+  <h3>I check my four neighbors &mdash; each side has exactly one costume that can reach me</h3>
+  <p>For each of my four sides I look at the pixel sitting there and ask: is it a head <em>whose arrow points at me?</em> From the left, only a right-mover counts. From above, only a down-mover. One legal costume per side:</p>
+  <figure style="margin:.6rem 0 0">
+    <div class="g" style="grid-template-columns:repeat(3,34px)">
+      <i></i><i class="h look">&darr;</i><i></i>
+      <i class="h look">&rarr;</i><i class="q">?</i><i class="h look">&larr;</i>
+      <i></i><i class="h look">&uarr;</i><i></i>
+    </div>
+    <div class="cap">The four looks. Each ringed cell shows the only arrow that would claim the center from that side.</div>
+  </figure>
+  <p>Mechanically: for side <em>i</em>, I read the neighbor <em>opposite</em> to travel-direction <em>i</em> &mdash; a right-mover can only arrive from my left, so "checking arrivals from direction right" means "reading my left neighbor".</p>
+</div>
+
+<!-- NODE C -->
+<div class="node">
+  <div class="tag">the loop &middot; decode &amp; filter</div>
+  <h3>Subtract the head offset &mdash; if what's left isn't a direction, skip</h3>
+  <p>The neighbor's stored number, minus 2, should be a direction code 0&ndash;3. Empty gives &minus;2, trail gives &minus;1 &mdash; both fall outside the range and the loop moves on. This one subtraction is the whole "is it a head?" test:</p>
+  <figure style="margin:.6rem 0 0">
+    <div class="row">
+      <div><div class="g" style="grid-template-columns:34px"><i></i></div><div class="lab">0 &minus; 2 = &minus;2<br><b style="color:var(--dead)">skip</b></div></div>
+      <div><div class="g" style="grid-template-columns:34px"><i class="t"></i></div><div class="lab">1 &minus; 2 = &minus;1<br><b style="color:var(--dead)">skip</b></div></div>
+      <div><div class="g" style="grid-template-columns:repeat(4,34px)"><i class="h">&rarr;</i><i class="h">&larr;</i><i class="h">&uarr;</i><i class="h">&darr;</i></div><div class="lab">2..5 &minus; 2 = 0..3<br><b style="color:var(--born)">a real head &mdash; keep looking</b></div></div>
+    </div>
+  </figure>
+</div>
+
+<!-- NODE D -->
+<div class="node">
+  <div class="tag">the loop &middot; claim, path 1</div>
+  <h3>Straight shot: its direction equals the direction pointing at me &rarr; +1 claim</h3>
+  <figure style="margin:.6rem 0 0">
+    <div class="g" style="grid-template-columns:repeat(3,34px)">
+      <i class="h claim">&rarr;</i><i class="q">?</i><i></i>
+    </div>
+    <div class="cap">Left neighbor is a right-mover. Match. Claim counter goes up by one, and I remember <em>which side</em> claimed me &mdash; that side becomes my direction if I'm born.</div>
+  </figure>
+</div>
+
+<!-- NODE E -->
+<div class="node">
+  <div class="tag">the loop &middot; claim, path 2</div>
+  <h3>Sideways fork: a head <em>beside</em> me traveling the other axis claims me ~3.2% of the time</h3>
+  <p>Same neighbor cell, wrong arrow: the head next to me is cruising <em>past</em>, on the perpendicular axis. Normally that's not a claim. But a dice roll under 3.18% lets it claim me anyway &mdash; and since the passing head <em>also</em> keeps claiming its own straight-ahead cell, the wire <strong>branches</strong>:</p>
+  <figure style="margin:.6rem 0 0">
+    <div class="flip">
+      <div class="f1">
+        <div class="g" style="grid-template-columns:repeat(3,34px)">
+          <i class="t"></i><i class="h">&rarr;</i><i></i>
+          <i></i><i class="q">?</i><i></i>
+          <i></i><i></i><i></i>
+        </div>
+        <div class="lab">a right-mover sits above me &mdash; rolling the dice&hellip;</div>
+      </div>
+      <div class="f2">
+        <div class="g" style="grid-template-columns:repeat(3,34px)">
+          <i class="t"></i><i class="t"></i><i class="h">&rarr;</i>
+          <i></i><i class="h born">&darr;</i><i></i>
+          <i></i><i></i><i></i>
+        </div>
+        <div class="lab">3.2% win: it moved on <em>and</em> spawned me &mdash; a fork</div>
+      </div>
+    </div>
+    <div class="cap">Axis test: direction codes come in pairs &mdash; 0,1 are horizontal, 2,3 vertical. Halving the code gives the pair number; different pair = perpendicular = fork candidate.</div>
+  </figure>
+  <p><em>This one dice roll is the entire reason the pattern is a network instead of a set of straight rays.</em></p>
+</div>
+
+<!-- NODE F -->
+<div class="node">
+  <div class="tag">after the loop &middot; the tally</div>
+  <h3>Exactly one claim &rarr; maybe born. Zero or two+ &rarr; nothing</h3>
+  <p>Your screenshot, live. <strong>Click the four side cells</strong> to toggle an arrow aimed at the center, and watch the tally decide:</p>
+  <figure style="margin:.6rem 0 0">
+    <div class="g" id="tally" style="grid-template-columns:repeat(3,34px)"></div>
+    <div class="readout" id="tallyout"></div>
+    <div class="cap">Two heads aiming at the same cell annihilate <em>and</em> both die into trail behind &mdash; that is the permanent one-cell gap where two nets meet.</div>
+  </figure>
+</div>
+
+<!-- NODE G -->
+<div class="node">
+  <div class="tag">exactly one claim &middot; the windshield</div>
+  <h3>Look 3 cells ahead of where I'd point &mdash; any occupancy, refuse to be born</h3>
+  <p>Before dressing up, I check a 3-cell windshield <em>one step ahead of me</em> in my new direction: dead ahead, ahead-left, ahead-right. All three must be empty (their values sum to zero):</p>
+  <figure style="margin:.6rem 0 0">
+    <div class="row">
+      <div>
+        <div class="g" style="grid-template-columns:repeat(3,34px)">
+          <i class="dim"></i><i class="look"></i><i class="dim"></i>
+          <i class="h born">&rarr;</i><i class="look"></i><i class="dim"></i>
+          <i class="dim"></i><i class="look"></i><i class="dim"></i>
+        </div>
+        <div class="lab">clear &rarr; <b style="color:var(--born)">born</b></div>
+      </div>
+      <div>
+        <div class="g" style="grid-template-columns:repeat(3,34px)">
+          <i class="dim"></i><i class="look"></i><i class="dim"></i>
+          <i class="q">?</i><i class="look"></i><i class="dim"></i>
+          <i class="dim"></i><i class="t bad"></i><i class="dim"></i>
+        </div>
+        <div class="lab">one brown cell in view &rarr; <b style="color:var(--dead)">stay empty</b></div>
+      </div>
+    </div>
+    <div class="cap">The windshield is why wires never weld onto each other and always keep a one-cell moat of black around every net.</div>
+  </figure>
+</div>
+
+<!-- NODE H -->
+<div class="node">
+  <div class="tag">exactly one claim &middot; the wobble</div>
+  <h3>10% of births swap to a random <em>perpendicular</em> direction</h3>
+  <p>One more dice roll, over 0.9: instead of inheriting the claiming direction, pick one of the two directions on the <em>other</em> axis. Horizontal movers turn up or down; vertical movers turn left or right. Never a reverse:</p>
+  <figure style="margin:.6rem 0 0">
+    <div class="g" style="grid-template-columns:repeat(6,34px)">
+      <i class="t"></i><i class="t"></i><i class="t"></i><i class="t"></i><i class="dim"></i><i class="dim"></i>
+      <i class="dim"></i><i class="dim"></i><i class="dim"></i><i class="h born">&darr;</i><i class="dim"></i><i class="dim"></i>
+    </div>
+    <div class="cap">A right-running wire suddenly kinks 90&deg;. Combined with forks, this turns rays into a city map.</div>
+  </figure>
+  <div class="note"><b>Hidden quirk worth knowing:</b> this dice roll is salted only by the pixel's <em>position</em>, never by the frame. So the 10% "turn tiles" are frozen into the grid &mdash; every wire that crosses the same pixel turns at the same spot, forever. The forks (3.2%) <em>do</em> use the frame, so they differ every pass.</div>
+</div>
+
+<!-- NODE I -->
+<div class="node">
+  <div class="tag">write</div>
+  <h3>Become a head: direction + the head offset</h3>
+  <figure style="margin:.6rem 0 0">
+    <div class="g" style="grid-template-columns:repeat(4,34px)">
+      <i class="h">&rarr;</i><i class="h">&larr;</i><i class="h">&uarr;</i><i class="h">&darr;</i>
+    </div>
+    <div class="cap">Direction 0..3 dresses back up as value 2..5. Next tick, some empty cell ahead reads this and the graph runs again.</div>
+  </figure>
+</div>
+
+</div><!-- /graph -->
+
+<h2>2. Microscope &mdash; watch the claims happen</h2>
+
+<p><strong>Click</strong> a cell to cycle it through empty &rarr; the four heads &rarr; trail &rarr; empty. Turn on <em>show claims</em>: green ring = exactly one claim (will be born, if the windshield allows), red ring = two-plus claims (annihilation), then press <strong>step</strong>:</p>
+
+<figure>
+  <canvas id="micro" class="demo" width="672" height="416" aria-label="Steppable microscope grid of the wire automaton"></canvas>
+  <div class="controls">
+    <button id="m-step">step</button>
+    <button id="m-play">play</button>
+    <button id="m-duel">head-on duel</button>
+    <button id="m-clear">clear</button>
+    <label><input type="checkbox" id="m-claims" checked> show claims</label>
+    <span id="m-gen">tick 0</span>
+  </div>
+  <figcaption>Set up the duel and step slowly: the two heads annihilate one cell apart &mdash; your "two nets, one gap" frame, reproduced.</figcaption>
+</figure>
+
+<h2>3. The full machine</h2>
+
+<p>Same rules, thousands of pixels, sparse random heads at tick zero. Drag the fork dice to feel what 3.18% is buying you &mdash; near 0% the world is straight rays; too high and it froths:</p>
+
+<figure>
+  <canvas id="big" class="demo" width="672" height="416" aria-label="Full-speed wire automaton"></canvas>
+  <div class="controls">
+    <button id="b-play">pause</button>
+    <button id="b-re">reseed</button>
+    <label>fork <input type="range" id="b-fork" min="0" max="12" step="0.1" value="3.18"> <span id="b-forkv">3.18%</span></label>
+    <label>turn <input type="range" id="b-turn" min="0" max="30" step="1" value="10"> <span id="b-turnv">10%</span></label>
+  </div>
+  <figcaption>Click anywhere to drop a fresh head. The gaps you see between nets are node F; the black moats along every wire are node G.</figcaption>
+</figure>
+
+<div class="note"><b>The whole graph in one breath:</b> heads die into trail &middot; empty cells count who aims at them &middot; exactly one claimant, a clear windshield, and you're a head &middot; rare sideways claims make forks &middot; rare position-locked turns make bends &middot; double claims make gaps. Six sentences, one universe.</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- shared machinery ---------- */
+var DIRS = [[1,0],[-1,0],[0,1],[0,-1]];           // right, left, up, down (math y-up)
+var GLYPH = ["\u2192","\u2190","\u2191","\u2193"];
+
+function hash(x, y, salt){
+  var n = (Math.imul(x,1973) + Math.imul(y,9277) + Math.imul(salt,26699)) >>> 0;
+  n = Math.imul(n ^ (n>>>15), 2246822519) >>> 0;
+  n = Math.imul(n ^ (n>>>13), 3266489917) >>> 0;
+  return ((n ^ (n>>>16)) >>> 0) / 4294967296;
+}
+
+function World(w, h){
+  this.w = w; this.h = h;
+  this.a = new Uint8Array(w*h);
+  this.b = new Uint8Array(w*h);
+  this.frame = 1;
+  this.forkP = 0.0318;
+  this.turnP = 0.10;
+}
+World.prototype.idx = function(x, y){
+  var w=this.w, h=this.h;
+  return ((y%h+h)%h)*w + ((x%w+w)%w);
+};
+World.prototype.get = function(x, y){ return this.a[this.idx(x,y)]; };
+World.prototype.seed = function(density, salt){
+  for (var y=0;y<this.h;y++) for (var x=0;x<this.w;x++){
+    this.a[y*this.w+x] = hash(x,y,salt) < density ? 2 + (hash(x,y,salt+1)*4|0) : 0;
+  }
+  this.frame = 1;
+};
+// returns claims map when wanted: per cell, 0/1/2 (2 == "two or more")
+World.prototype.claims = function(){
+  var out = new Uint8Array(this.w*this.h);
+  for (var y=0;y<this.h;y++) for (var x=0;x<this.w;x++){
+    var inc=0;
+    for (var i=0;i<4;i++){
+      var dq = this.get(x-DIRS[i][0], y-DIRS[i][1]) - 2;
+      if (dq<0 || dq>3) continue;
+      if (dq===i) inc++;
+      else if ((dq>>1)!==(i>>1) && hash(x,y,i*31+this.frame) < this.forkP) inc++;
+    }
+    out[y*this.w+x] = inc>2?2:inc;
+  }
+  return out;
+};
+World.prototype.step = function(){
+  var w=this.w, h=this.h, a=this.a, b=this.b;
+  for (var y=0;y<h;y++) for (var x=0;x<w;x++){
+    var me = a[y*w+x], next = me>=2 ? 1 : me;
+    var inc=0, dn=-1;
+    for (var i=0;i<4;i++){
+      var dq = this.get(x-DIRS[i][0], y-DIRS[i][1]) - 2;
+      if (dq<0 || dq>3) continue;
+      if (dq===i){ inc++; dn=i; }
+      else if ((dq>>1)!==(i>>1) && hash(x,y,i*31+this.frame) < this.forkP){ inc++; dn=i; }
+    }
+    if (inc===1){
+      var d=dn, f=DIRS[d], t=[f[1],f[0]];
+      var ahead = this.get(x+f[0],y+f[1]) + this.get(x+f[0]+t[0],y+f[1]+t[1]) + this.get(x+f[0]-t[0],y+f[1]-t[1]);
+      if (ahead===0){
+        if (hash(x,y,5) > 1-this.turnP) d = (d<2?2:0) + (hash(x,y,9)*2|0);
+        next = 2+d;
+      }
+    }
+    b[y*w+x] = next;
+  }
+  this.b = a; this.a = b; // swap: the ping-pong
+  this.frame++;
+};
+
+/* ---------- renderer ---------- */
+function draw(world, canvas, cell, showClaims, claims){
+  var g = canvas.getContext("2d");
+  g.fillStyle = "#000"; g.fillRect(0,0,canvas.width,canvas.height);
+  var cs = getComputedStyle(document.documentElement);
+  var ACC = cs.getPropertyValue("--accent").trim() || "#e59470";
+  var TRL = cs.getPropertyValue("--trail").trim() || "#5c4130";
+  var w = world.w, h = world.h;
+  for (var y=0;y<h;y++) for (var x=0;x<w;x++){
+    var v = world.a[y*w+x];
+    var px = x*cell, py = (h-1-y)*cell;   // flip: math y-up -> screen y-down
+    if (v===1){ g.fillStyle = TRL; g.fillRect(px,py,cell-1,cell-1); }
+    else if (v>=2){
+      g.fillStyle = ACC; g.fillRect(px,py,cell-1,cell-1);
+      if (cell >= 14){
+        g.fillStyle = "#161513";
+        g.font = "bold " + (cell*0.62|0) + "px ui-monospace, Menlo, monospace";
+        g.textAlign = "center"; g.textBaseline = "middle";
+        g.fillText(GLYPH[v-2], px+cell/2, py+cell/2+1);
+      }
+    } else if (cell >= 14){
+      g.strokeStyle = "#2e2b26"; g.strokeRect(px+.5,py+.5,cell-1,cell-1);
+    }
+    if (showClaims && claims){
+      var c = claims[y*w+x];
+      if (c===1){ g.strokeStyle = "#7fc98f"; g.lineWidth = 2; g.strokeRect(px+1.5,py+1.5,cell-4,cell-4); g.lineWidth=1; }
+      else if (c>=2){ g.strokeStyle = "#d97b7b"; g.lineWidth = 2; g.strokeRect(px+1.5,py+1.5,cell-4,cell-4); g.lineWidth=1; }
+    }
+  }
+}
+
+/* ---------- node F: interactive tally ---------- */
+(function(){
+  var box = document.getElementById("tally");
+  var out = document.getElementById("tallyout");
+  // sides in DOM order: top(down-mover), left(right-mover), right(left-mover), bottom(up-mover)
+  var state = { top:false, left:true, right:false, bottom:false };
+  var side = [
+    {key:"top",    glyph:"\u2193"},
+    {key:"left",   glyph:"\u2192"},
+    {key:"right",  glyph:"\u2190"},
+    {key:"bottom", glyph:"\u2191"}
+  ];
+  function cellEl(cls, txt){
+    var i = document.createElement("i");
+    if (cls) i.className = cls;
+    if (txt) i.textContent = txt;
+    return i;
+  }
+  function render(){
+    box.innerHTML = "";
+    var n = (state.top?1:0)+(state.left?1:0)+(state.right?1:0)+(state.bottom?1:0);
+    var born = n===1;
+    var cells = [
+      null, mk("top"), null,
+      mk("left"), centre(), mk("right"),
+      null, mk("bottom"), null
+    ];
+    function mk(k){
+      var s = side.filter(function(o){return o.key===k;})[0];
+      var el = cellEl(state[k] ? "h claim" : "", state[k] ? s.glyph : "");
+      el.style.cursor = "pointer";
+      el.setAttribute("role","button");
+      el.setAttribute("aria-pressed", state[k]);
+      el.setAttribute("tabindex","0");
+      el.addEventListener("click", function(){ state[k]=!state[k]; render(); });
+      el.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); state[k]=!state[k]; render(); } });
+      return el;
+    }
+    function centre(){
+      return born ? cellEl("born","\u2605") : cellEl("q","?");
+    }
+    cells.forEach(function(c){ box.appendChild(c || cellEl("dim","")); });
+    out.innerHTML = "claims = " + n + " \u2192 " +
+      (born ? '<b class="ok">born</b>' : '<b class="no">nothing</b>' +
+        (n>=2 ? ' <span style="color:var(--dim)">(mutual annihilation)</span>' : ''));
+  }
+  render();
+})();
+
+/* ---------- microscope ---------- */
+(function(){
+  var canvas = document.getElementById("micro");
+  var CELL = 32, W = canvas.width/CELL|0, H = canvas.height/CELL|0;
+  var world = new World(W, H);
+  var showClaims = document.getElementById("m-claims");
+  var gen = document.getElementById("m-gen");
+  var playBtn = document.getElementById("m-play");
+  var running = false, timer = null;
+
+  function paint(){
+    draw(world, canvas, CELL, showClaims.checked, showClaims.checked ? world.claims() : null);
+    gen.textContent = "tick " + (world.frame-1);
+  }
+  function stepOnce(){ world.step(); paint(); }
+  function stop(){ running=false; playBtn.textContent="play"; if(timer){clearInterval(timer);timer=null;} }
+
+  document.getElementById("m-step").addEventListener("click", function(){ stop(); stepOnce(); });
+  playBtn.addEventListener("click", function(){
+    if (running){ stop(); }
+    else { running=true; playBtn.textContent="pause"; timer=setInterval(stepOnce, 220); }
+  });
+  document.getElementById("m-clear").addEventListener("click", function(){ stop(); world.a.fill(0); world.frame=1; paint(); });
+  document.getElementById("m-duel").addEventListener("click", function(){
+    stop(); world.a.fill(0); world.frame=1;
+    var y = H>>1;
+    world.a[y*W + 2]     = 2;  // right-mover on the left edge
+    world.a[y*W + (W-3)] = 3;  // left-mover on the right edge
+    paint();
+  });
+  showClaims.addEventListener("change", paint);
+  canvas.addEventListener("pointerdown", function(e){
+    var r = canvas.getBoundingClientRect();
+    var x = (e.clientX-r.left) * (canvas.width/r.width) / CELL | 0;
+    var yTop = (e.clientY-r.top) * (canvas.height/r.height) / CELL | 0;
+    var y = H-1-yTop;
+    if (x<0||y<0||x>=W||y>=H) return;
+    var v = world.a[y*W+x];
+    // cycle: 0 -> 2 -> 3 -> 4 -> 5 -> 1 -> 0
+    var nextV = v===0?2 : v>=2&&v<5?v+1 : v===5?1 : 0;
+    world.a[y*W+x] = nextV;
+    paint();
+  });
+  paint();
+})();
+
+/* ---------- full machine ---------- */
+(function(){
+  var canvas = document.getElementById("big");
+  var CELL = 4, W = canvas.width/CELL|0, H = canvas.height/CELL|0;
+  var world = new World(W, H);
+  world.seed(0.002, 42);
+  var running = true;
+  var playBtn = document.getElementById("b-play");
+  var forkR = document.getElementById("b-fork"), forkV = document.getElementById("b-forkv");
+  var turnR = document.getElementById("b-turn"), turnV = document.getElementById("b-turnv");
+
+  forkR.addEventListener("input", function(){ world.forkP = forkR.value/100; forkV.textContent = (+forkR.value).toFixed(2)+"%"; });
+  turnR.addEventListener("input", function(){ world.turnP = turnR.value/100; turnV.textContent = turnR.value+"%"; });
+  playBtn.addEventListener("click", function(){ running=!running; playBtn.textContent = running?"pause":"play"; });
+  document.getElementById("b-re").addEventListener("click", function(){ world.seed(0.002, (Math.random()*1e6)|0); });
+  canvas.addEventListener("pointerdown", function(e){
+    var r = canvas.getBoundingClientRect();
+    var x = (e.clientX-r.left)*(canvas.width/r.width)/CELL|0;
+    var y = H-1-((e.clientY-r.top)*(canvas.height/r.height)/CELL|0);
+    if (x<0||y<0||x>=W||y>=H) return;
+    world.a[world.idx(x,y)] = 2 + (Math.random()*4|0);
+  });
+
+  var last = 0;
+  function loop(t){
+    if (running && t-last > 66){ world.step(); last = t; }
+    draw(world, canvas, CELL, false, null);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+
+})();
+</script>
+</main>
+</body>
 </html>

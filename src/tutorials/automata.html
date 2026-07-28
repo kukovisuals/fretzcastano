@@ -1,108 +1,683 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cellular Automata</title>
-    <meta
-      name="description"
-      content="Building intuition for state-machine movement — the receiver's perspective, one cell at a time."
-    />
-    <meta name="tag" content="automata" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=JetBrains+Mono:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --bg: #0b0b0d;
-        --surface: #131316;
-        --line: #26262b;
-        --bone: #ece7dd;
-        --dim: #8a857b;
-        --membrane: #c8a24a;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--bone);
-        font-family: "Bricolage Grotesque", system-ui, sans-serif;
-        line-height: 1.6;
-      }
-      .mono { font-family: "JetBrains Mono", monospace; }
-      .wrap { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
-      a.back {
-        color: var(--dim);
-        text-decoration: none;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.85rem;
-      }
-      a.back:hover { color: var(--membrane); }
-      h1 {
-        font-size: clamp(2rem, 6vw, 3.2rem);
-        line-height: 1.05;
-        margin: 28px 0 8px;
-        letter-spacing: -0.02em;
-      }
-      .lede { color: var(--dim); font-size: 1.1rem; margin-bottom: 32px; }
-      h2 {
-        margin-top: 40px;
-        font-size: 1.4rem;
-        border-bottom: 1px solid var(--line);
-        padding-bottom: 8px;
-      }
-      .note {
-        margin-top: 40px;
-        padding: 16px 18px;
-        border: 1px dashed var(--line);
-        border-radius: 10px;
-        color: var(--dim);
-        font-size: 0.9rem;
-      }
-      .accent { color: var(--membrane); }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <a class="back" href="/">← back to gallery</a>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cellular automata, from a blank grid</title>
+<style>
+  :root{
+    --bg:      #161513;
+    --ink:     #d6d2c8;
+    --dim:     #8f8a7e;
+    --accent:  #e59470;
+    --accent2: #9fb8a8;
+    --codebg:  #1e1c19;
+    --edge:    #2e2b26;
+  }
+  *{ box-sizing:border-box; }
+  html{ background:var(--bg); }
+  body{
+    margin:0; color:var(--ink);
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size:15px; line-height:1.7;
+  }
+  main{ max-width:46rem; margin:0 auto; padding:3.5rem 1.25rem 6rem; }
+  h1{ font-size:1.7rem; line-height:1.3; font-weight:700; margin:0 0 .25rem; }
+  .byline{ color:var(--dim); margin-bottom:2.5rem; }
+  .byline a{ color:var(--dim); }
+  h2{ font-size:1.15rem; margin:3rem 0 1rem; color:var(--accent); font-weight:700; }
+  h2::before{ content:"## "; color:var(--edge); }
+  p{ margin:1rem 0; }
+  a{ color:var(--accent); text-decoration:none; border-bottom:1px solid #5a4033; }
+  a:hover{ border-bottom-color:var(--accent); }
+  strong{ color:#fff; }
+  em{ color:var(--accent2); }
+  code{ background:var(--codebg); border:1px solid var(--edge); padding:.05em .35em; border-radius:3px; font-size:.92em; }
+  pre{ background:var(--codebg); border:1px solid var(--edge); border-radius:4px;
+       padding:1rem 1.1rem; overflow-x:auto; font-size:.85rem; line-height:1.55; margin:1.25rem 0; }
+  pre code{ background:none; border:none; padding:0; font-size:inherit; }
+  pre .c{ color:var(--dim); }
+  figure{ margin:2rem 0; text-align:center; }
+  figcaption{ color:var(--dim); font-style:italic; font-size:.85rem; margin-top:.6rem; }
+  canvas.demo{ width:100%; display:block; border:1px solid var(--edge); border-radius:4px;
+               background:#000; cursor:pointer; image-rendering:pixelated; }
+  .demo-wrap{ position:relative; }
+  .demo-hint{ position:absolute; right:.6rem; bottom:.55rem; font-size:.72rem;
+              background:#0008; color:var(--dim); padding:.1rem .5rem; border-radius:3px; pointer-events:none; }
+  .demo-play{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+              background:#000a; color:var(--ink); border:none; font:inherit; cursor:pointer; border-radius:4px; }
+  .demo-fail{ border:1px solid var(--edge); border-radius:4px; padding:2rem 1rem;
+              color:var(--dim); text-align:center; font-size:.85rem; }
+  .note{ border-left:3px solid var(--accent2); background:var(--codebg);
+         padding:.7rem 1rem; margin:1.25rem 0; font-size:.9rem; }
+  .note b{ color:var(--accent2); }
+  .controls{ display:flex; flex-wrap:wrap; gap:.6rem 1.2rem; align-items:center;
+             margin:.8rem 0; font-size:.85rem; color:var(--dim); }
+  .controls label{ display:flex; gap:.5rem; align-items:center; }
+  .controls button{ font:inherit; color:var(--ink); background:var(--codebg);
+                    border:1px solid var(--edge); border-radius:3px; padding:.2rem .7rem; cursor:pointer; }
+  .controls button:hover{ border-color:var(--accent); color:var(--accent); }
+  input[type=range]{ accent-color:var(--accent); }
+  input[type=checkbox]{ accent-color:var(--accent); }
+  .gallery{ display:flex; flex-wrap:wrap; gap:1.4rem 1.6rem; justify-content:center; margin:1.5rem 0 .5rem; }
+  .mini{ font-size:.75rem; color:var(--dim); text-align:center; }
+  .mini .g{ display:grid; gap:2px; justify-content:center; margin-bottom:.45rem; }
+  .mini .g i{ display:flex; align-items:center; justify-content:center;
+              width:26px; height:26px; background:#1e1c19; border:1px solid var(--edge);
+              font-style:normal; font-size:.8rem; color:var(--dim); }
+  .mini .g i.on{ background:var(--accent); border-color:var(--accent); color:#161513; font-weight:700; }
+  .mini .g i.ctr{ background:#000; color:#fff; font-size:1rem; }
+  .mini .g i.ctron{ background:var(--accent); border-color:#fff; color:#161513; font-size:1rem; font-weight:700; }
+  .mini b{ color:var(--ink); font-weight:400; }
+  .coords{ display:grid; grid-template-columns:repeat(5, 52px); gap:3px; justify-content:center; margin:1.5rem 0 .4rem; }
+  .coords i{ display:flex; align-items:center; justify-content:center; height:40px;
+             background:var(--codebg); border:1px solid var(--edge);
+             font-style:normal; font-size:.7rem; color:var(--dim); }
+  .coords i.x{ background:var(--accent); border-color:var(--accent); color:#161513; font-weight:700; }
+  .coords i.c{ background:#000; color:var(--ink); font-size:1rem; }
+  .duo{ display:flex; gap:.8rem; }
+  .duo > div{ flex:1; min-width:0; }
+  .duo .lab{ font-size:.78rem; color:var(--dim); text-align:center; margin-top:.4rem; }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  @media (max-width:430px){ .coords{ grid-template-columns:repeat(5, 44px); } .duo{ flex-direction:column; } }
+</style>
+</head>
+<body>
+<main>
 
-      <h1>Cellular <span class="accent">Automata</span></h1>
-      <p class="lede">
-        A state-machine on a grid. Every cell looks at its neighbours, follows a
-        rule, and steps forward. Complex behaviour from simple, local decisions.
-      </p>
+<h1>Cellular automata, from a blank grid</h1>
+<p class="byline">There's not much to this, really. It's a walk from an empty grid of squares down to a working GLSL automaton &mdash; specifically <em>your</em> Day&nbsp;449 shader: Conway's rule running on a diamond neighbourhood, with a little built-in microscope. I've kept the code out of it until the very end; instead every idea comes with a diagram or a live demo, and every demo on this page is real GLSL running in your browser, so none of it is hand-waving. If you want the deeper stuff &mdash; energy, paint, rule bitmasks &mdash; that's over in <a href="sponge-automaton-docs.html">the sponge reference</a>.</p>
 
-      <h2>The receiver's perspective</h2>
-      <p>
-        Instead of asking "where does this cell send its state?", flip it: each
-        cell asks "what am I receiving from my neighbours this step?" Movement
-        becomes a pull, not a push — easier to reason about and easier to make
-        deterministic.
-      </p>
+<h2>1. A world made of squares</h2>
 
-      <h2>Birth &amp; survival rules</h2>
-      <p>
-        A cell's next state is decided by counting live neighbours and comparing
-        against a rule set — which counts cause a cell to be born, and which let
-        it survive. Change the rule set and the whole character of the system
-        changes.
-      </p>
+<p>Start with nothing: a grid of squares, all switched off. This grid is the entire universe of a cellular automaton, and there's not much to it. No objects, no particles, nothing you can pick up or move around. Just squares, and each square is always in exactly one of two states: <strong>on</strong> or <strong>off</strong>. That's the whole setup.</p>
 
-      <h2>Reading and writing without collisions</h2>
-      <p>
-        Each step reads the previous frame and writes a fresh one, so a cell
-        never reads a value that has already been updated this tick. Keeping the
-        two frames separate is what makes the simulation stable.
-      </p>
+<p>Time here isn't smooth. It happens in <strong>ticks</strong>, like a clock: tick, tick, tick. Between ticks, nothing whatsoever happens. At each tick, every square decides &mdash; all at once, simultaneously &mdash; whether it'll be on or off during the next tick. That decision is the whole physics of the place, and it follows one law that every square obeys identically. Different laws give you different universes; we'll get to the famous one in a second.</p>
 
-      <p class="note mono">
-        ✍️ Scaffold page — replace this body with your full write-up, diagrams,
-        and interactive demos. This file lives in
-        <span class="accent">src/tutorials/automata.html</span>.
-      </p>
+<p>Before any of that, get a feel for the stage itself. Below is an empty grid. <strong>Click squares to switch them on</strong> &mdash; this is you playing creator, placing the starting points by hand, one click at a time. Then hit <strong>step</strong> to advance the clock one tick under Conway's law (coming up next), and watch what your arrangement does:</p>
+
+<figure>
+  <div class="demo-wrap"><canvas id="hand" class="demo" width="660" height="390" aria-label="Clickable grid of cells with manual stepping"></canvas></div>
+  <div class="controls">
+    <button id="h-step">step</button>
+    <button id="h-play">play</button>
+    <button id="h-rand">random</button>
+    <button id="h-clear">clear</button>
+    <label><input type="checkbox" id="h-counts" checked> show counts</label>
+    <span id="h-gen">tick 0</span>
+  </div>
+  <figcaption>The universe, hand-operated. Click to create, step to let time pass.</figcaption>
+</figure>
+
+<p>Try a few tiny experiments before reading on: drop a single square on its own and step (it vanishes &mdash; loneliness). Put three in a row and step a few times (they blink forever &mdash; the simplest little "creature"). Drop a filled 2&times;2 block (it just sits there &mdash; stability). Everything this whole page builds is made out of behaviours like these.</p>
+
+<h2>2. The law: three questions</h2>
+
+<p>Here's the law the demo above was quietly following. Every tick, every square asks itself exactly three questions:</p>
+
+<p><strong>Question one &mdash; how many of my neighbours are on?</strong> A neighbour is a square touching me. Count the ones that are on, call the total <em>k</em>. That single number is the only thing a square is ever allowed to use. It can't see far away, it can't remember last week, it can't know what the pattern "is". Just: how crowded is it right here?</p>
+
+<p><strong>Question two &mdash; am I currently on?</strong></p>
+
+<p><strong>Question three &mdash; so what does the law say?</strong> Conway's law, the famous one, goes like this: <em>if you're off and exactly 3 neighbours are on, switch on (a birth needs three parents). If you're on and 2 or 3 neighbours are on, stay on (comfortable). Otherwise, be off (lonely if fewer, crushed if more).</em> That's the whole thing.</p>
+
+<p>The same law as pictures &mdash; the centre square (marked *) is the one doing the deciding, and only its own state plus its count matter:</p>
+
+<div class="gallery" id="cases" aria-label="The four outcomes of Conway's law"></div>
+<figcaption style="text-align:center; color:var(--dim); font-style:italic; font-size:.85rem;">Every possible fate. There are no other cases &mdash; the law really is this small.</figcaption>
+
+<p>Flip the <em>show counts</em> overlay on in the demo above and the law becomes visible: each square shows its k, green numbers mark squares about to be born, struck-out squares are about to die. Step slowly and audit any square you like &mdash; the whole universe is just these three questions asked everywhere at once.</p>
+
+<h2>3. Time, and the photograph</h2>
+
+<p>One word in the law hides a big requirement: <em>simultaneously</em>. Every square decides at the same instant, based on how the grid looked <strong>before</strong> the tick. If squares updated one after another, the early deciders would corrupt the counts of the late deciders and the whole thing would break. So the machine needs two grids: the <strong>photograph</strong> (last tick, frozen, read-only, everyone consults it) and the <strong>canvas</strong> (next tick, being written). Once every square has written its answer, the canvas becomes the new photograph and a fresh blank canvas gets prepared. Tick.</p>
+
+<p>This is exactly what a GPU shader hands you, almost by accident. A fragment shader is a little program that runs <em>once per pixel, all pixels in parallel</em> &mdash; which is precisely "every square decides simultaneously". And on Shadertoy, wiring Buffer&nbsp;A's own output back into its input channel makes Shadertoy keep two copies of the buffer and swap them every frame: while all pixels write frame N, they read frame N&minus;1. <strong>That swap is the ping-pong.</strong> One pixel = one square, one frame = one tick, ping-pong = photograph and canvas.</p>
+
+<p>Now the question you actually asked: <em>is the ping-pong what makes it move?</em></p>
+
+<p><strong>No &mdash; the ping-pong is what makes time exist; the law is what makes things move.</strong> The ping-pong is just the film advancing in the camera: it guarantees there's a sequence of grids at all. What shows up on those grids is entirely the law's doing. And the law can't move anything, because <strong>nothing in this universe is movable</strong> &mdash; remember, there are only squares bolted to their positions. So when something visibly travels across the screen, what's really going on is: squares just ahead of the pattern are counting exactly 3 and switching on, while squares at the back are going lonely and switching off. The pattern is demolished and rebuilt one square over, tick after tick. Think of a stadium wave &mdash; nobody runs anywhere, yet the wave circles the stadium. Or a news ticker: fixed bulbs, travelling headline.</p>
+
+<p>See it for yourself. Below is a real shader &mdash; the actual GPU ping-pong machine &mdash; shoved under a microscope so each square is huge. It starts <strong>paused</strong>, loaded with a famous little pattern called the glider. Hit <strong>step</strong> and stare at one particular square: it never slides anywhere. It lights, holds, dies; a neighbour lights next. After five steps the glider's been rebuilt one square diagonally over. You can also draw your own squares with the mouse, mid-flight:</p>
+
+<figure>
+  <div class="demo-wrap"><canvas id="micro" class="demo" height="312" aria-label="A real shader on giant pixels, manually steppable"></canvas></div>
+  <div class="controls">
+    <button id="m-step">step</button>
+    <button id="m-play">play</button>
+    <button id="m-glider">glider</button>
+    <button id="m-rand">random</button>
+    <button id="m-clear">clear</button>
+    <span>&larr; and draw with the mouse</span>
+  </div>
+  <figcaption>A genuine GLSL automaton, zoomed way in. The "movement" is birth at the front edge, death at the back. Nothing actually travels.</figcaption>
+</figure>
+
+<h2>4. The neighbourhood is a shape</h2>
+
+<p>Question one said "count your neighbours" &mdash; but who counts as a neighbour? That's a <em>choice</em>, and it's a much bigger one than it looks. The classic pick is the 8 squares physically touching you (the <strong>Moore neighbourhood</strong>). But any set of squares at fixed positions relative to you is a legal neighbourhood, and each choice gives you a physically different universe &mdash; different creatures, different textures, different speed limits on how fast patterns can travel. Here's a family of shapes, borrowed from the shader this whole series grew out of:</p>
+
+<div class="gallery" id="shapes" aria-label="Gallery of neighbourhood shapes"></div>
+<figcaption style="text-align:center; color:var(--dim); font-style:italic; font-size:.85rem;">Six universes. The * only asks its questions to the orange squares.</figcaption>
+
+<p>To pin a shape down precisely, give each square an <strong>address relative to me</strong>: a pair (i,&nbsp;j) meaning "i squares to my right, j squares up" &mdash; negatives mean left and down. My own address is (0,&nbsp;0). Here's the diamond, the shape <em>your</em> shader uses, with every member's address written in:</p>
+
+<div class="coords" id="coords" aria-label="Coordinate map of the diamond neighbourhood"></div>
+<figcaption style="text-align:center; color:var(--dim); font-style:italic; font-size:.85rem;">The diamond as a list of eight addresses. In the final code, each address becomes exactly one line.</figcaption>
+
+<p>Now a lovely bit of theory that your Day&nbsp;449 quietly proves: <strong>Conway's law never mentions the shape.</strong> It only says "3 to be born, 2&ndash;3 to survive" &mdash; numbers that make sense for any neighbourhood with 8 members. So you can lift the law off the Moore square and set it down on the diamond, and you get a perfectly valid, brand-new universe: same physics constants, different geometry of space. The two are <em>not</em> the same universe wearing different clothes &mdash; the diamond can't see its four touching diagonal corners but can reach out to distance 2, so information flows through it differently. Watch the same law, same starting density, on the two geometries:</p>
+
+<figure>
+  <div class="duo">
+    <div>
+      <div class="demo-wrap"><canvas id="moore" class="demo" height="220" aria-label="Conway's law on the Moore neighbourhood"></canvas><span class="demo-hint">click = reseed</span></div>
+      <div class="lab">Moore: the 8 touching squares</div>
     </div>
-  </body>
+    <div>
+      <div class="demo-wrap"><canvas id="diamond" class="demo" height="220" aria-label="Conway's law on the diamond neighbourhood"></canvas><span class="demo-hint">click = reseed</span></div>
+      <div class="lab">diamond: your Day 449 universe</div>
+    </div>
+  </div>
+  <figcaption>One law, two geometries. Notice how the diamond's debris organises along diagonals &mdash; its space is rotated 45&deg; relative to Moore's.</figcaption>
+</figure>
+
+<h2>5. One click of the dice: the starting points</h2>
+
+<p>A law isn't enough &mdash; the universe needs a beginning. On tick zero there's no photograph to consult, so the very first frame has to be special: instead of asking the three questions, every square <strong>rolls a die once</strong>. "Random number under some threshold &rarr; I start on." That threshold is the <strong>density</strong>: at 0.5, roughly half of all squares begin on (your Day&nbsp;449's pick); at 0.15, a sparse scatter.</p>
+
+<p>Two bits of theory hide in this one-time dice roll. First, a shader has no dice &mdash; it's a calculator, always deterministic &mdash; so randomness gets faked with a <strong>hash</strong>: a deliberately chaotic bit of arithmetic (sines of big numbers, ugly constants) that turns each square's position into a value that merely <em>looks</em> random. Same position, same "random" number, which is fine &mdash; we only need the pattern to be structureless, not secret. Second, the starting density matters less than you'd think and more than you'd hope: Conway-family laws burn any dense soup down to sparse debris and small stable creatures pretty quickly &mdash; the universe forgets most of its initial condition inside a hundred ticks. But <em>which</em> debris survives, and where, is pure initial condition. Try it &mdash; here's your diamond universe with the dice threshold on a slider:</p>
+
+<figure>
+  <div class="demo-wrap"><canvas id="dice" class="demo" height="240" aria-label="Diamond-Conway with adjustable seed density"></canvas><span class="demo-hint">click = reseed</span></div>
+  <div class="controls">
+    <label>density <input type="range" id="d-density" min="2" max="90" value="50"> <span id="d-val">50%</span></label>
+    <button id="d-re">reroll</button>
+  </div>
+  <figcaption>The one click that creates all the points. High densities collapse fast; around 30&ndash;50% leaves the richest wreckage.</figcaption>
+</figure>
+
+<h2>6. The camera is not the world</h2>
+
+<p>Last idea before the code. The simulation buffer and the image on your screen are <strong>two different things</strong>: the buffer is the world, the Image pass is a camera pointed at it. The camera can show the world one-square-per-pixel (the naive thing), or it can <strong>zoom</strong>: draw each world-square as a bunch of screen pixels. Your Day&nbsp;449 does exactly that &mdash; its camera reads the buffer at 15% of the screen coordinate, blowing every square up into a fat ~7-pixel block. That's why your automaton looks so pleasingly chunky, and it's the same trick the microscope demo above uses (there, I also shrink the world itself so the GPU doesn't bother simulating squares you'll never see &mdash; a difference worth knowing: your version simulates the whole full-resolution world but only photographs its bottom-left corner).</p>
+
+<p>And here's the final demo of the page: your complete Day&nbsp;449, done faithfully &mdash; diamond neighbourhood, Conway's law, 50% dice, chunky camera:</p>
+
+<figure>
+  <div class="demo-wrap"><canvas id="final" class="demo" height="300" aria-label="Day 449: diamond Conway with zoomed camera"></canvas><span class="demo-hint">live &mdash; click to reseed</span></div>
+  <figcaption>Day 449, rebuilt from theory. Everything above is in here; nothing else is.</figcaption>
+</figure>
+
+<h2>7. The code, at last</h2>
+
+<p>Now &mdash; and only now &mdash; the code, which at this point should read like a summary of the page. Two passes. Buffer&nbsp;A is the world (sections 1&ndash;5); Image is the camera (section 6). Setup: Buffer&nbsp;A's <code>iChannel0</code> = Buffer&nbsp;A itself.</p>
+
+<pre><code><span class="c">// ---- Buffer A: the world ------------------------------------------</span>
+
+<span class="c">// the hash: chaotic arithmetic pretending to be dice (section 5)</span>
+#define rnd(x) fract(1e3*sin((x + iTime*0.1)*mat2(2,13.51,73.37,-57.17)))
+
+<span class="c">// "consult the photograph": was the square at p on, last tick? (section 3)</span>
+int cell(ivec2 p) {
+    ivec2 R = ivec2(iResolution.xy);
+    p = (p + R) % R;              <span class="c">// donut world — walk off one edge, return on the other</span>
+    return texelFetch(iChannel0, p, 0).x &gt; 0.5 ? 1 : 0;
+}
+
+void mainImage(out vec4 O, vec2 U)
+{
+    ivec2 px = ivec2(U);          <span class="c">// the square I am standing on (section 3)</span>
+
+    <span class="c">// tick zero: one click of the dice, 50% density (section 5)</span>
+    if (iFrame == 0) { O = vec4(rnd(U).x &lt; 0.5 ? 1. : 0.); return; }
+
+    <span class="c">// question one: count the diamond — eight addresses,</span>
+    <span class="c">// eight lines, laid out like the map in section 4</span>
+    int k =
+      cell(px+ivec2( 0,-2)) + cell(px+ivec2(-1,-1)) + cell(px+ivec2( 1,-1))
+    + cell(px+ivec2(-2, 0))                         + cell(px+ivec2( 2, 0))
+    + cell(px+ivec2(-1, 1)) + cell(px+ivec2( 1, 1)) + cell(px+ivec2( 0, 2));
+
+    <span class="c">// question two: am I on?</span>
+    bool on = texelFetch(iChannel0, px, 0).x &gt; 0.5;
+
+    <span class="c">// question three: Conway's law (section 2)</span>
+    O = vec4(k == 3 || (on && k == 2) ? 1. : 0.);
+}</code></pre>
+
+<pre><code><span class="c">// ---- Image: the camera (section 6) --------------------------------</span>
+void mainImage(out vec4 O, vec2 U)
+{
+    ivec2 p = ivec2(U * 0.15);    <span class="c">// zoom: every world-square becomes ~7 screen pixels</span>
+    O = vec4(texelFetch(iChannel0, p, 0).rgb, 1);
+}</code></pre>
+
+<p>This is your Day&nbsp;449 with three honest annotations, because the differences between it and the listing above are worth understanding rather than just quietly absorbing:</p>
+
+<p><strong>The wrap line.</strong> Your version computes <code>R</code> in <code>cell()</code> but never actually uses it &mdash; there's no <code>(p + R) % R</code>. Reading outside a texture with <code>texelFetch</code> is undefined behaviour in GLSL; on most hardware it hands back zero, which makes your world's edges behave like <strong>walls of permanently dead squares</strong>. That's a legitimate universe! (Patterns die when they hit the border instead of wrapping back in.) But it's an accident, not a decision, and it can differ from GPU to GPU. The one line above turns the world into a donut, which is the usual choice; delete it if you genuinely want walls &mdash; but then delete the unused <code>R</code> too, so the code says what it means.</p>
+
+<p><strong>The sampler dropdowns do nothing.</strong> Your Buffer&nbsp;A input is set to <em>mipmap / repeat</em> in the channel settings. <code>texelFetch</code> bypasses samplers entirely &mdash; no filtering, no wrap mode, ever. Those dropdowns only touch <code>texture()</code> calls. Harmless, but worth knowing that changing them will never change your output; wrap behaviour has to happen in code, like above.</p>
+
+<p><strong>The camera crops.</strong> <code>U * 0.15</code> means the screen shows only the bottom-left 15% of the world while the GPU faithfully simulates the other 85% off-camera. Fine at this scale; if you ever zoom in harder, think about simulating a smaller world instead and zooming that (the microscope-demo approach) &mdash; same look, a fraction of the work. Centring the view is one more idea: <code>ivec2(U * 0.15) + ivec2(iResolution.xy * 0.42)</code> photographs the middle of the world instead of the corner.</p>
+
+<p>Where this connects onward: the <a href="sponge-automaton-docs.html">sponge reference</a> takes this exact shader and bolts on, one at a time, the three upgrades that turn it into the flowing colourful thing &mdash; the rule packed into integers (so laws with eleven survival counts stay one line), cells with energy instead of on/off (six-tick deaths, ghost trails), and paint (living squares drop pigment). Every one of those clips onto the code above without disturbing it.</p>
+
+<p class="byline" style="margin-top:3rem">Diagram style borrowed from this page's own earlier drafts, at a reader's request. Neighbourhood family from <a href="https://www.shadertoy.com/view/ds2fD1">misol101's Automata X</a>.</p>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ mini-grid renderers (diagrams) ============ */
+function grid(el, rows, cellPx){
+  var g = document.createElement("div");
+  g.className = "g";
+  g.style.gridTemplateColumns = "repeat(" + rows[0].length + ", " + (cellPx||26) + "px)";
+  for (var r = 0; r < rows.length; r++)
+    for (var c = 0; c < rows[r].length; c++){
+      var i = document.createElement("i");
+      var ch = rows[r][c];
+      if (ch === "X") i.className = "on";
+      else if (ch === "o") { i.className = "ctr"; i.textContent = "*"; }
+      else if (ch === "O") { i.className = "ctron"; i.textContent = "*"; }
+      g.appendChild(i);
+    }
+  el.appendChild(g);
+  return g;
+}
+function mini(parent, label, sub, rows, cellPx){
+  var w = document.createElement("div");
+  w.className = "mini";
+  grid(w, rows, cellPx);
+  var d = document.createElement("div");
+  d.innerHTML = "<b>" + label + "</b>" + (sub ? "<br>" + sub : "");
+  w.appendChild(d);
+  parent.appendChild(w);
+}
+
+/* the four fates (section 2) */
+var cases = document.getElementById("cases");
+mini(cases, "birth",       "off, k = 3 &rarr; ON",    ["X..","XoX","..."]);
+mini(cases, "survival",    "on, k = 2 or 3 &rarr; ON",[".X.",".OX","..."]);
+mini(cases, "loneliness",  "on, k &lt; 2 &rarr; OFF",  ["...",".O.","..X"]);
+mini(cases, "overcrowding","on, k &gt; 3 &rarr; OFF",  ["XX.","XOX","..."]);
+
+/* the shape gallery (section 4) */
+var shapes = document.getElementById("shapes");
+mini(shapes, "Moore",          "8 squares",  [".....",".XXX.",".XoX.",".XXX.","....."], 22);
+mini(shapes, "diamond",        "8 squares",  ["..X..",".X.X.","X.o.X",".X.X.","..X.."], 22);
+mini(shapes, "nh 4",           "20 squares", [".XXX.","XXXXX","XXoXX","XXXXX",".XXX."], 22);
+mini(shapes, "nh 5 (sponge)",  "24 squares", ["XXXXX","XXXXX","XXoXX","XXXXX","XXXXX"], 22);
+mini(shapes, "nh 6",           "16 squares", ["XXXXX","X...X","X.o.X","X...X","XXXXX"], 22);
+mini(shapes, "nh 10",          "12 squares", ["XXXXX","..X..","..o..","..X..","XXXXX"], 22);
+
+/* the diamond address map (section 4) */
+var DIAMOND = {"0,2":1,"-1,1":1,"1,1":1,"-2,0":1,"2,0":1,"-1,-1":1,"1,-1":1,"0,-2":1};
+var coordsEl = document.getElementById("coords");
+for (var jj = 2; jj >= -2; jj--)
+  for (var ii = -2; ii <= 2; ii++){
+    var ce = document.createElement("i");
+    if (ii === 0 && jj === 0) { ce.className = "c"; ce.textContent = "*"; }
+    else {
+      ce.textContent = ii + "," + jj;
+      if (DIAMOND[ii + "," + jj]) ce.className = "x";
+    }
+    coordsEl.appendChild(ce);
+  }
+
+/* ============ hand-run grid (section 1, 2D canvas) ============ */
+var HW = 44, HH = 26, CS = 15;
+var hcv = document.getElementById("hand"), hctx = hcv.getContext("2d");
+var hg = new Uint8Array(HW*HH), gen = 0, playing = false, timer = null, showCounts = true;
+
+function idx(x,y){ return ((y+HH)%HH)*HW + ((x+HW)%HW); }
+function counts(g){
+  var c = new Uint8Array(HW*HH);
+  for (var y=0;y<HH;y++) for (var x=0;x<HW;x++){
+    var k=0;
+    for (var j=-1;j<=1;j++) for (var i=-1;i<=1;i++)
+      if ((i||j) && g[idx(x+i,y+j)]) k++;
+    c[y*HW+x]=k;
+  }
+  return c;
+}
+function drawHand(){
+  hctx.fillStyle="#000"; hctx.fillRect(0,0,hcv.width,hcv.height);
+  var c = showCounts && !playing ? counts(hg) : null;
+  hctx.font="9px ui-monospace, Menlo, monospace";
+  hctx.textAlign="center"; hctx.textBaseline="middle";
+  for (var y=0;y<HH;y++) for (var x=0;x<HW;x++){
+    var on = hg[y*HW+x], px=x*CS, py=(HH-1-y)*CS;
+    hctx.fillStyle = on ? "#e59470" : "#1e1c19";
+    hctx.fillRect(px+1,py+1,CS-2,CS-2);
+    if (c){
+      var k=c[y*HW+x], born=!on&&k===3, die=on&&k!==2&&k!==3;
+      if (on||k>0){
+        hctx.fillStyle = born ? "#9fb8a8" : on ? "#161513" : "#575349";
+        hctx.fillText(k, px+CS/2, py+CS/2+.5);
+      }
+      if (die){
+        hctx.strokeStyle="#161513"; hctx.lineWidth=1.5;
+        hctx.beginPath(); hctx.moveTo(px+4,py+4); hctx.lineTo(px+CS-4,py+CS-4); hctx.stroke();
+      }
+    }
+  }
+}
+function stepHand(){
+  var c=counts(hg), n=new Uint8Array(HW*HH);
+  for (var i2=0;i2<hg.length;i2++)
+    n[i2] = (c[i2]===3 || (hg[i2] && c[i2]===2)) ? 1 : 0;
+  hg=n; gen++;
+  document.getElementById("h-gen").textContent = "tick " + gen;
+  drawHand();
+}
+function setPlaying(v){
+  playing=v;
+  document.getElementById("h-play").textContent = v ? "pause" : "play";
+  if (timer){ clearInterval(timer); timer=null; }
+  if (v) timer=setInterval(stepHand,140);
+  drawHand();
+}
+hcv.addEventListener("pointerdown", function(ev){
+  var r=hcv.getBoundingClientRect(), sx=hcv.width/r.width, sy=hcv.height/r.height, mode=null;
+  function put(e2){
+    var x=Math.floor((e2.clientX-r.left)*sx/CS), y=HH-1-Math.floor((e2.clientY-r.top)*sy/CS);
+    if (x<0||y<0||x>=HW||y>=HH) return;
+    if (mode===null) mode = hg[y*HW+x] ? 0 : 1;
+    hg[y*HW+x]=mode; drawHand();
+  }
+  put(ev);
+  function mv(e3){ put(e3); }
+  function up(){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); }
+  window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up);
+});
+document.getElementById("h-step").addEventListener("click", function(){ setPlaying(false); stepHand(); });
+document.getElementById("h-play").addEventListener("click", function(){ setPlaying(!playing); });
+document.getElementById("h-clear").addEventListener("click", function(){ hg.fill(0); gen=0; document.getElementById("h-gen").textContent="tick 0"; setPlaying(false); });
+document.getElementById("h-rand").addEventListener("click", function(){ for (var i3=0;i3<hg.length;i3++) hg[i3]=Math.random()<.18?1:0; gen=0; setPlaying(false); });
+document.getElementById("h-counts").addEventListener("change", function(e4){ showCounts=e4.target.checked; drawHand(); });
+drawHand();
+
+/* ============ WebGL2 harness ============ */
+var SIM_SRC = [
+"#version 300 es",
+"precision highp float;",
+"uniform sampler2D u_prev;",
+"uniform float u_time, u_density;",
+"uniform int u_frame, u_shape, u_seedmode;",  // shape: 0 = Moore, 1 = diamond
+"out vec4 O;",
+"vec2 rnd(vec2 x){ return fract(1e3*sin((x+u_time)*mat2(2.,13.51,73.37,-57.17))); }",
+"void main(){",
+"  ivec2 p = ivec2(gl_FragCoord.xy);",
+"  ivec2 R = textureSize(u_prev, 0);",
+"  if (u_frame == 0){",
+"    if (u_seedmode == 1){",
+"      ivec2 q = p - R/2;",
+"      bool g = q==ivec2(1,2)||q==ivec2(2,1)||q==ivec2(0,0)||q==ivec2(1,0)||q==ivec2(2,0);",
+"      O = vec4(g ? 1. : 0.);",
+"    } else {",
+"      O = vec4(rnd(gl_FragCoord.xy).x < u_density ? 1. : 0.);",
+"    }",
+"    return;",
+"  }",
+"  int k = 0;",
+"  for (int j=-2; j<=2; j++)",
+"  for (int i=-2; i<=2; i++){",
+"    bool keep = u_shape == 1 ? (abs(i)+abs(j) == 2) : (max(abs(i),abs(j)) == 1);",
+"    if (keep && texelFetch(u_prev, (p+ivec2(i,j)+R)%R, 0).x > .5) k++;",
+"  }",
+"  bool on = texelFetch(u_prev, p, 0).x > .5;",
+"  O = vec4(k == 3 || (on && k == 2) ? 1. : 0.);",
+"}"].join("\n");
+
+var SHOW_SRC = [
+"#version 300 es",
+"precision highp float;",
+"uniform sampler2D u_tex;",
+"uniform int u_scale;",
+"out vec4 O;",
+"void main(){",
+"  ivec2 pc = ivec2(gl_FragCoord.xy);",
+"  if (u_scale > 5 && (pc.x % u_scale == 0 || pc.y % u_scale == 0)) { O = vec4(vec3(.055), 1.); return; }",
+"  ivec2 p = pc / u_scale;",
+"  ivec2 R = textureSize(u_tex, 0) - 1;",
+"  float v = texelFetch(u_tex, min(p, R), 0).x;",
+"  O = v > .5 ? vec4(.898, .58, .439, 1.) : vec4(.086, .082, .075, 1.);",
+"}"].join("\n");
+
+var VERT_SRC = [
+"#version 300 es",
+"void main(){",
+"  vec2 v = vec2((gl_VertexID<<1)&2, gl_VertexID&2);",
+"  gl_Position = vec4(v*2.-1., 0., 1.);",
+"}"].join("\n");
+
+function compile(gl, type, src){
+  var s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+function program(gl, fsrc){
+  var pr = gl.createProgram();
+  gl.attachShader(pr, compile(gl, gl.VERTEX_SHADER, VERT_SRC));
+  gl.attachShader(pr, compile(gl, gl.FRAGMENT_SHADER, fsrc));
+  gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+  return pr;
+}
+function fail(canvas, msg){
+  var d = document.createElement("div");
+  d.className = "demo-fail"; d.textContent = msg;
+  canvas.replaceWith(d);
+}
+var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function Sim(canvas, opts){
+  opts = opts || {};
+  this.canvas = canvas;
+  this.density = (opts.density != null ? opts.density : 50) / 100;
+  this.shape = opts.shape || 0;
+  this.seedmode = opts.seedmode || 0;
+  this.scale = opts.scale || 1;
+  this.fps = opts.fps || 0;                  // 0 = every frame
+  this.manual = !!opts.manual;
+  this.startPaused = !!opts.startPaused;
+  this.frame = 0; this.running = false; this.visible = true;
+
+  var gl = canvas.getContext("webgl2", { alpha:false, antialias:false, depth:false });
+  if (!gl) { fail(canvas, "This demo needs WebGL2 — the diagrams above tell the same story."); return; }
+  this.gl = gl;
+  try { this.simP = program(gl, SIM_SRC); this.showP = program(gl, SHOW_SRC); }
+  catch(e){ fail(canvas, "Shader failed to compile: " + e.message); return; }
+  gl.bindVertexArray(gl.createVertexArray());
+
+  var U = {};
+  ["u_prev","u_time","u_density","u_frame","u_shape","u_seedmode"].forEach(function(n){
+    U[n] = gl.getUniformLocation(this.simP, n);
+  }, this);
+  U.u_tex   = gl.getUniformLocation(this.showP, "u_tex");
+  U.u_scale = gl.getUniformLocation(this.showP, "u_scale");
+  this.u = U;
+
+  this.resize();
+  var self = this;
+  new IntersectionObserver(function(en){ self.visible = en[0].isIntersecting; }, {threshold:0}).observe(canvas);
+  window.addEventListener("resize", function(){
+    if (Math.abs(canvas.clientWidth - self.w) > 4) { self.resize(); self.reseed(); }
+  });
+  if (this.manual){
+    canvas.addEventListener("pointerdown", function(ev){ self.paintFrom(ev); });
+  } else {
+    canvas.addEventListener("click", function(){ self.reseed(); });
+  }
+  this.reseed();
+  if (!this.startPaused){
+    if (reduced) this.addPlayButton(); else this.start();
+  }
+}
+Sim.prototype.resize = function(){
+  var gl = this.gl, c = this.canvas;
+  this.w = Math.max(2, c.clientWidth | 0);
+  this.h = c.height;
+  c.width = this.w;
+  this.tw = Math.max(4, Math.floor(this.w / this.scale));
+  this.th = Math.max(4, Math.floor(this.h / this.scale));
+  var self = this;
+  this.tex = [0,1].map(function(){
+    var t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, self.tw, self.th);
+    return t;
+  });
+  this.fb = [0,1].map(function(i){
+    var f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, self.tex[i], 0);
+    return f;
+  });
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  this.src = 0;
+};
+Sim.prototype.step = function(){
+  var gl = this.gl, u = this.u, dst = 1 - this.src;
+  gl.useProgram(this.simP);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, this.fb[dst]);
+  gl.viewport(0, 0, this.tw, this.th);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, this.tex[this.src]);
+  gl.uniform1i(u.u_prev, 0);
+  gl.uniform1f(u.u_time, performance.now()/1000);
+  gl.uniform1f(u.u_density, this.density);
+  gl.uniform1i(u.u_frame, this.frame);
+  gl.uniform1i(u.u_shape, this.shape);
+  gl.uniform1i(u.u_seedmode, this.seedmode);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  this.src = dst; this.frame++;
+};
+Sim.prototype.draw = function(){
+  var gl = this.gl;
+  gl.useProgram(this.showP);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, this.w, this.h);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, this.tex[this.src]);
+  gl.uniform1i(this.u.u_tex, 0);
+  gl.uniform1i(this.u.u_scale, this.scale);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+};
+Sim.prototype.reseed = function(){
+  if (!this.gl) return;
+  this.frame = 0; this.step(); this.draw();
+};
+Sim.prototype.poke = function(cx, cy){
+  if (!this.gl) return;
+  if (cx < 0 || cy < 0 || cx >= this.tw || cy >= this.th) return;
+  var gl = this.gl;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, this.fb[this.src]);
+  gl.enable(gl.SCISSOR_TEST);
+  gl.scissor(cx, cy, 1, 1);
+  gl.clearBufferfv(gl.COLOR, 0, [1, 1, 1, 1]);
+  gl.disable(gl.SCISSOR_TEST);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  if (this.frame === 0) this.frame = 1;
+  this.draw();
+};
+Sim.prototype.clearAll = function(){
+  if (!this.gl) return;
+  var gl = this.gl;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, this.fb[this.src]);
+  gl.clearBufferfv(gl.COLOR, 0, [0, 0, 0, 0]);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  this.frame = 1;
+  this.draw();
+};
+Sim.prototype.paintFrom = function(ev){
+  var self = this, c = this.canvas, r = c.getBoundingClientRect();
+  function put(e2){
+    var x = (e2.clientX - r.left) * (c.width / r.width);
+    var yTop = (e2.clientY - r.top) * (c.height / r.height);
+    var fy = c.height - yTop;
+    self.poke(Math.floor(x / self.scale), Math.floor(fy / self.scale));
+  }
+  put(ev);
+  function mv(e3){ put(e3); }
+  function up(){ window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); }
+  window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+};
+Sim.prototype.start = function(){
+  if (this.running || !this.gl) return;
+  this.running = true;
+  var self = this, last = 0;
+  function loop(t){
+    if (!self.running) return;
+    if (self.visible && (!self.fps || t - last >= 1000 / self.fps)){
+      self.step(); self.draw(); last = t;
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+};
+Sim.prototype.stop = function(){ this.running = false; };
+Sim.prototype.addPlayButton = function(){
+  var self = this, wrap = this.canvas.parentElement;
+  var b = document.createElement("button");
+  b.className = "demo-play"; b.textContent = "▶ run simulation";
+  b.addEventListener("click", function(){ b.remove(); self.start(); });
+  wrap.appendChild(b);
+};
+
+/* ---- section 3: microscope ---- */
+var micro = new Sim(document.getElementById("micro"), {
+  scale: 13, shape: 0, seedmode: 1, density: 15, manual: true, startPaused: true, fps: 8
+});
+document.getElementById("m-step").addEventListener("click", function(){
+  if (!micro.gl) return;
+  micro.stop(); document.getElementById("m-play").textContent = "play";
+  micro.step(); micro.draw();
+});
+document.getElementById("m-play").addEventListener("click", function(){
+  if (!micro.gl) return;
+  if (micro.running){ micro.stop(); this.textContent = "play"; }
+  else { micro.start(); this.textContent = "pause"; }
+});
+document.getElementById("m-glider").addEventListener("click", function(){
+  if (!micro.gl) return;
+  micro.stop(); document.getElementById("m-play").textContent = "play";
+  micro.seedmode = 1; micro.reseed();
+});
+document.getElementById("m-rand").addEventListener("click", function(){
+  if (!micro.gl) return;
+  micro.stop(); document.getElementById("m-play").textContent = "play";
+  micro.seedmode = 0; micro.reseed();
+});
+document.getElementById("m-clear").addEventListener("click", function(){
+  if (!micro.gl) return;
+  micro.stop(); document.getElementById("m-play").textContent = "play";
+  micro.clearAll();
+});
+
+/* ---- section 4: one law, two geometries ---- */
+new Sim(document.getElementById("moore"),   { scale: 3, shape: 0, density: 30, fps: 20 });
+new Sim(document.getElementById("diamond"), { scale: 3, shape: 1, density: 30, fps: 20 });
+
+/* ---- section 5: dice ---- */
+var dice = new Sim(document.getElementById("dice"), { scale: 3, shape: 1, density: 50, fps: 20 });
+var dd = document.getElementById("d-density"), dv = document.getElementById("d-val");
+dd.addEventListener("input", function(){
+  dv.textContent = dd.value + "%";
+  if (dice.gl){ dice.density = dd.value / 100; dice.reseed(); }
+});
+document.getElementById("d-re").addEventListener("click", function(){ if (dice.gl) dice.reseed(); });
+
+/* ---- section 6: Day 449 reconstructed ---- */
+new Sim(document.getElementById("final"), { scale: 7, shape: 1, density: 50, fps: 15 });
+
+})();
+</script>
+</main>
+</body>
 </html>
