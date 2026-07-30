@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faking 3D with four zooming layers</title>
+<style>
+  :root{
+    --bg:      #161513;
+    --ink:     #d6d2c8;
+    --dim:     #8f8a7e;
+    --accent:  #e59470;
+    --accent2: #9fb8a8;
+    --codebg:  #1e1c19;
+    --edge:    #2e2b26;
+    --trail:   #5c4130;
+    --born:    #7fc98f;
+    --dead:    #d97b7b;
+  }
+  *{ box-sizing:border-box; }
+  html{ background:var(--bg); }
+  body{
+    margin:0; color:var(--ink);
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size:15px; line-height:1.7;
+  }
+  main{ max-width:46rem; margin:0 auto; padding:3.5rem 1.25rem 6rem; }
+  h1{ font-size:1.7rem; line-height:1.3; font-weight:700; margin:0 0 .25rem; }
+  .byline{ color:var(--dim); margin-bottom:2rem; }
+  h2{ font-size:1.15rem; margin:3rem 0 1rem; color:var(--accent); font-weight:700; }
+  h2::before{ content:"## "; color:var(--edge); }
+  p{ margin:1rem 0; }
+  strong{ color:#fff; }
+  em{ color:var(--accent2); }
+  figure{ margin:1.5rem 0; text-align:center; }
+  figcaption{ color:var(--dim); font-style:italic; font-size:.85rem; margin-top:.6rem; }
+  .note{ border-left:3px solid var(--accent2); background:var(--codebg);
+         padding:.7rem 1rem; margin:1.25rem 0; font-size:.9rem; }
+  .note b{ color:var(--accent2); }
+
+  /* ---------- hero ---------- */
+  .hero{ margin:1.5rem 0 0; }
+  .hero canvas{ width:100%; height:auto; aspect-ratio:16/8; display:block;
+                border:1px solid var(--edge); border-radius:6px; background:#000; }
+  .heronote{ color:var(--dim); font-size:.82rem; font-style:italic; text-align:center; margin-top:.6rem; }
+
+  /* ---------- the graph spine ---------- */
+  .graph{ position:relative; margin:2rem 0; padding-left:2.1rem; }
+  .graph::before{
+    content:""; position:absolute; left:.65rem; top:0; bottom:0; width:4px;
+    background:var(--trail); border-radius:2px;
+  }
+  .graph::after{ /* a small depth pulse riding the spine */
+    content:""; position:absolute; left:calc(.65rem - 3px); top:0; width:10px; height:10px;
+    background:var(--accent); border-radius:2px;
+    animation:pulse 3.4s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{ transform:scale(.5); opacity:.5; } 50%{ transform:scale(1.5); opacity:1; } }
+  @media (prefers-reduced-motion: reduce){ .graph::after{ animation:none; } }
+  .node{ position:relative; background:var(--codebg); border:1px solid var(--edge);
+         border-radius:6px; padding:1rem 1.1rem 1.2rem; margin:0 0 1.6rem; }
+  .node::before{
+    content:""; position:absolute; left:-1.55rem; top:1.15rem; width:1rem; height:4px;
+    background:var(--trail);
+  }
+  .node .tag{ font-size:.72rem; letter-spacing:.08em; color:var(--dim); text-transform:uppercase; }
+  .node h3{ margin:.15rem 0 .6rem; font-size:1rem; color:#fff; font-weight:700; }
+  .node p{ font-size:.9rem; margin:.6rem 0; }
+
+  /* ---------- buffer graph diagram ---------- */
+  .bufgraph{ margin:1.5rem auto; display:block; max-width:100%; }
+  .bufgraph text{ font-family:ui-monospace, Menlo, monospace; }
+
+  /* ---------- demos ---------- */
+  canvas.demo{ width:100%; display:block; border:1px solid var(--edge); border-radius:4px;
+               background:#000; image-rendering:auto; }
+  canvas.arc{ height:200px; }
+  .controls{ display:flex; flex-wrap:wrap; gap:.6rem 1.2rem; align-items:center;
+             margin:.8rem 0; font-size:.85rem; color:var(--dim); }
+  .controls label{ display:flex; gap:.5rem; align-items:center; }
+  .controls .val{ color:var(--accent2); min-width:2.6rem; }
+  .controls button{ font:inherit; color:var(--ink); background:var(--codebg);
+                    border:1px solid var(--edge); border-radius:3px; padding:.2rem .7rem; cursor:pointer; }
+  .controls button:hover{ border-color:var(--accent); color:var(--accent); }
+  .controls button.on{ border-color:var(--accent); color:var(--accent); }
+  input[type=range]{ accent-color:var(--accent); }
+  input[type=checkbox]{ accent-color:var(--accent); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* ---------- layer swatches ---------- */
+  .lgd{ display:flex; flex-wrap:wrap; gap:.4rem 1rem; justify-content:center; font-size:.78rem; color:var(--dim); margin:.6rem 0; }
+  .lgd span{ display:inline-flex; align-items:center; gap:.4rem; }
+  .sw{ width:.8rem; height:.8rem; border-radius:2px; display:inline-block; }
+
+  /* ---------- code blocks ---------- */
+  pre.code{ background:var(--codebg); border:1px solid var(--edge); border-radius:6px;
+            padding:.85rem 1rem; margin:1.1rem 0 .2rem; overflow-x:auto;
+            font-size:.82rem; line-height:1.55; color:var(--ink); white-space:pre; tab-size:2; }
+  pre.code .c{ color:var(--dim); font-style:italic; }
+  .node pre.code{ font-size:.78rem; }
+  code.inl{ background:var(--codebg); border:1px solid var(--edge); border-radius:3px;
+            padding:.03rem .32rem; font-size:.88em; color:var(--accent2); }
+
+  @media (max-width:430px){ canvas.arc{ height:160px; } }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Faking 3D with four zooming layers</h1>
+<p class="byline">One flat, tiling image. Four copies of it, each parked at a different point in the same slow zoom and crossfaded so the motion never stops and never pops. Your eye reads continuous depth &mdash; no perspective, no parallax, just <em>looming</em> and <em>handoff</em>.</p>
+
+<figure class="hero">
+  <canvas id="hero" width="960" height="480" aria-label="Live infinite-zoom effect made from four layers"></canvas>
+  <div class="heronote">The whole thing below is this one effect, taken apart line by line. The pattern is a stand-in; the machinery is identical.</div>
+</figure>
+
+<h2>The idea &mdash; depth from a single flat image</h2>
+
+<p>There's no 3D scene here and no camera. The trick leans on two of the oldest monocular depth cues your visual system has: <strong>looming</strong> (something that steadily grows is coming toward you) and <strong>relative size</strong> (of two identical things, the smaller one is farther away). If you take one flat image and continuously magnify it, that reads as flying <em>into</em> it. If you show several magnifications at once, the small ones sit "back" and the large ones sit "up front", and suddenly a single texture has a front-to-back stack.</p>
+
+<p>A single zooming layer has one problem: it can't zoom forever. Sooner or later it's magnified so hard it's a blurry smear, and you have to snap it back to the start &mdash; a visible <em>pop</em>. The fix is the entire technique: run <strong>several</strong> layers through the same zoom, staggered in time, and crossfade between them so that whenever one layer reaches its ugly end, another has already faded in at the start to carry the picture. The reset always happens while a layer is invisible.</p>
+
+<h2>The buffer setup that makes it work</h2>
+
+<p>This lives in a three-pass Shadertoy graph. Only the middle pass is the effect; the setup around it is what lets the zoom exist at all.</p>
+
+<svg class="bufgraph" viewBox="0 0 620 150" width="620" height="150" role="img" aria-label="Buffer A feeds Buffer B feeds the Image pass">
+  <defs>
+    <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#8f8a7e"/>
+    </marker>
+  </defs>
+  <!-- Buffer A -->
+  <rect x="14" y="45" width="150" height="60" rx="6" fill="#1e1c19" stroke="#2e2b26"/>
+  <text x="89" y="70" fill="#d6d2c8" font-size="13" text-anchor="middle" font-weight="bold">Buffer A</text>
+  <text x="89" y="88" fill="#8f8a7e" font-size="10.5" text-anchor="middle">flat source · tiles</text>
+  <!-- self loop on A (it's a feedback automaton) -->
+  <path d="M40,45 C40,20 138,20 138,45" fill="none" stroke="#5c4130" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="89" y="30" fill="#5c4130" font-size="9" text-anchor="middle">feeds itself</text>
+  <!-- A -> B -->
+  <path d="M164,75 L228,75" fill="none" stroke="#8f8a7e" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="196" y="66" fill="#8f8a7e" font-size="9" text-anchor="middle">reads</text>
+  <!-- Buffer B (highlighted) -->
+  <rect x="230" y="40" width="160" height="70" rx="6" fill="#1e1c19" stroke="#e59470" stroke-width="1.8"/>
+  <text x="310" y="66" fill="#e59470" font-size="13" text-anchor="middle" font-weight="bold">Buffer B</text>
+  <text x="310" y="84" fill="#9fb8a8" font-size="10.5" text-anchor="middle">zoom compositor</text>
+  <text x="310" y="99" fill="#8f8a7e" font-size="9.5" text-anchor="middle">← this document</text>
+  <!-- B -> Image -->
+  <path d="M390,75 L454,75" fill="none" stroke="#8f8a7e" stroke-width="1.5" marker-end="url(#ah)"/>
+  <!-- Image -->
+  <rect x="456" y="45" width="150" height="60" rx="6" fill="#1e1c19" stroke="#2e2b26"/>
+  <text x="531" y="70" fill="#8f8a7e" font-size="13" text-anchor="middle" font-weight="bold">Image</text>
+  <text x="531" y="88" fill="#8f8a7e" font-size="10.5" text-anchor="middle">blur + vignette · skip</text>
+</svg>
+
+<p><strong>Buffer A</strong> is the flat source (in the original piece, a circuit automaton). For this effect its only job is to be <em>sample-able anywhere, at any scale</em>. That's why its texture is set to <code class="inl">wrap: repeat</code>: sampling far outside the normal 0&ndash;1 range just tiles the image, so a zoomed-out layer never runs into an edge or a seam. The source packs its brightness into one channel, <code class="inl">.y</code>, which is all we read.</p>
+
+<p><strong>Buffer B</strong> is this pass. It samples Buffer A on <code class="inl">iChannel0</code> and composites the layers. Two sampler settings on that input are load-bearing:</p>
+
+<div class="note"><b>The two settings that matter:</b> <code class="inl">wrap: repeat</code> means no seams at any zoom level &mdash; every layer, however far out, lands on valid tiled texture. <code class="inl">filter: linear</code> means the near, heavily-magnified layers interpolate smoothly instead of showing giant hard pixels. Switch to nearest and the front of the tunnel goes blocky; switch to clamp and the far layers smear at the frame edges. Get these two right and the rest is arithmetic.</div>
+
+<p><strong>Image</strong> is a cosmetic radial-blur and vignette pass. It's out of scope here &mdash; the depth is already fully built by the end of Buffer B.</p>
+
+<h2>The zoom, as a graph</h2>
+
+<p>Inside Buffer B, every pixel runs the same short loop, once per layer, and sums the results. Each node below is one line of that loop paired with the exact GLSL. Read top to bottom and you have the whole compositor.</p>
+
+<div class="graph">
+
+<!-- NODE 1 -->
+<div class="node">
+  <div class="tag">coordinates</div>
+  <h3>Centre the pixel and make it aspect-safe</h3>
+  <p>Shift the origin to the middle of the screen so the zoom pulls toward the centre, and divide by <em>height</em> (not width) so a wide window doesn't stretch the image sideways.</p>
+  <pre class="code">// U is the pixel coordinate. Recentre to [-x..x] × [-0.5..0.5] and keep
+// the aspect ratio square by dividing both axes by the height.
+vec2 uv = (U - 0.5*iResolution.xy) / iResolution.y;</pre>
+</div>
+
+<!-- NODE 2 -->
+<div class="node">
+  <div class="tag">the depth clock</div>
+  <h3>One number says how deep we are</h3>
+  <p>A single slowly rising value drives the whole zoom. Multiply <code class="inl">iTime</code> down to taste. Swap it for a scroll offset and the page scrolls the viewer through the tunnel instead of time doing it.</p>
+  <pre class="code">// The master phase. Everything below is a function of T.
+float T = iTime * 0.12;   // slower constant = a gentler dive</pre>
+</div>
+
+<!-- NODE 3 -->
+<div class="node">
+  <div class="tag">the loop &middot; stagger</div>
+  <h3>Every layer runs the same journey, evenly offset</h3>
+  <p>The loop runs once per layer (<code class="inl">ZL</code> of them). Each layer lives the identical birth-to-reset arc, but its phase is nudged by an even slice of the cycle, so at any instant the layers are spread out across the journey rather than bunched together. <code class="inl">mod(&hellip;, SPAN)</code> is what makes each layer wrap back to the start when it finishes.</p>
+  <pre class="code">for(int i = 0; i &lt; ZL; i++){
+    // Same arc for everyone, shifted by i/ZL of a full cycle.
+    // With ZL = 4, the four layers sit at 0, ¼, ½, ¾ of the way through.
+    float t = mod(T + float(i)*(SPAN/float(ZL)), SPAN);
+    // ...
+}</pre>
+</div>
+
+<!-- NODE 4 -->
+<div class="node">
+  <div class="tag">the loop &middot; the zoom</div>
+  <h3>Shrinking the sample scale <em>is</em> the zoom</h3>
+  <p>This is the heart of it. We sample the source at <code class="inl">uv * scale</code>. A <strong>large</strong> scale spreads a lot of texture across the screen, so features look small and far. As <code class="inl">t</code> climbs, scale shrinks toward zero, so we magnify an ever-tinier patch &mdash; features balloon and rush right up to the glass. Each layer therefore flies continuously inward.</p>
+  <pre class="code">// t goes 0 -&gt; SPAN, so scale goes SPAN -&gt; 0.
+// big scale = zoomed out (far);  scale near 0 = zoomed way in (near).
+float scale = SPAN - t;
+vec2  q     = uv * scale;   // (offset added in node 6)</pre>
+</div>
+
+<!-- NODE 5 -->
+<div class="node">
+  <div class="tag">the loop &middot; crossfade</div>
+  <h3>A sine window fades each layer in <em>and</em> out</h3>
+  <p>Each layer's contribution is weighted by a half-sine over its life: zero at birth, full in the middle, zero again at the reset. That's the whole reason there's no pop. A freshly-born layer (tiny, aliased) contributes nothing; a layer about to wrap (blurry, over-magnified) contributes nothing; every layer is only "loud" during its sharp middle. Because the reset happens at zero weight, it's invisible.</p>
+  <pre class="code">// 0 at t=0, 1 at t=SPAN/2, 0 at t=SPAN. Both ugly ends hidden.
+float w = sin(3.14159 * t / SPAN);</pre>
+  <figure style="margin:1rem 0 0">
+    <canvas id="arc" class="demo arc" width="900" height="200" aria-label="Four sine windows staggered across one zoom cycle"></canvas>
+    <div class="lgd" id="arc-lgd"></div>
+    <figcaption>Four layers riding one birth-to-reset arc. Each dot is a layer; its height is that layer's current weight. Notice there are always a couple of dots up near the peak &mdash; the picture is never carried by a fading layer alone.</figcaption>
+  </figure>
+</div>
+
+<!-- NODE 6 -->
+<div class="node">
+  <div class="tag">the loop &middot; decorrelate</div>
+  <h3>Offset each layer so they're different depths, not clones</h3>
+  <p>Every layer reads the <em>same</em> image. Without a per-layer shift they'd all sample identical content and the result would just be one image pulsing &mdash; no stack, no depth. A constant offset drops each layer onto a different patch of the (tiling) source, so each reads as its own plane, and each brings fresh content when it wraps. The optional rotation by <code class="inl">2.399</code> rad &mdash; the golden angle, about 137.5&deg; &mdash; spins each layer to a new orientation so repeats never visibly line up.</p>
+  <pre class="code">// Offset is added AFTER scaling, so each layer zooms toward its own fixed
+// point in the texture — a different slice of the world per layer.
+vec2 q = //rot(float(i)*2.399) *      // optional: golden-angle spin
+         (uv*scale)
+         + vec2(float(i)*3.31, float(i)*3.17);</pre>
+</div>
+
+<!-- NODE 7 -->
+<div class="node">
+  <div class="tag">accumulate &amp; normalize</div>
+  <h3>Weighted sum over layers, then divide by the total weight</h3>
+  <p>Add up every layer's sample scaled by its window, keep a running total of the weights, and divide at the end. That division turns the sum into a <em>weighted average</em> &mdash; which is exactly what a crossfade is. The <code class="inl">max(&hellip;, 1e-3)</code> just guards against dividing by zero if every window happens to bottom out at once.</p>
+  <pre class="code">    g    += texture(iChannel0, q).y * w;   // .y = the source's glow channel
+    wsum += w;
+}
+// weighted average = the crossfade between all active layers
+O = vec4(vec3(g / max(wsum, 1e-3)), 1.0);  // grayscale — colour it later</pre>
+</div>
+
+<!-- NODE 8 -->
+<div class="node">
+  <div class="tag">the tuning knob</div>
+  <h3>Why four layers?</h3>
+  <p>With the sine window, a lone layer is at full brightness for only an instant and dark most of the time &mdash; on its own it would visibly throb and dim. Stagger enough layers and their humps overlap so the combined weight stays healthy the whole way through. For <code class="inl">SPAN&nbsp;&asymp;&nbsp;0.7</code>, four is the sweet spot: always roughly two layers carrying the image. Fewer and you see pulsing and gaps; many more just costs fill-rate and muddies the picture. Set the layer count to 1 in the demo below to watch a single plane pop.</p>
+</div>
+
+</div><!-- /graph -->
+
+<h2>See it move</h2>
+
+<p>The same compositor, live and tunable. Start by dropping <strong>layers</strong> to 1 to feel the pop the crossfade exists to hide; turn on <strong>tint layers</strong> to see the depth stack as separate coloured planes; <strong>isolate</strong> one layer to watch it zoom and reset on its own.</p>
+
+<figure>
+  <canvas id="big" class="demo" width="900" height="500" aria-label="Interactive four-layer zoom"></canvas>
+  <div class="controls">
+    <button id="b-play">pause</button>
+    <label>layers <input type="range" id="b-zl" min="1" max="8" step="1" value="4"><span class="val" id="b-zlv">4</span></label>
+    <label>span <input type="range" id="b-span" min="0.3" max="1.2" step="0.05" value="0.7"><span class="val" id="b-spanv">0.70</span></label>
+    <label>speed <input type="range" id="b-spd" min="0" max="3" step="0.1" value="1"><span class="val" id="b-spdv">1.0</span></label>
+  </div>
+  <div class="controls">
+    <label><input type="checkbox" id="b-off" checked> per-layer offset</label>
+    <label><input type="checkbox" id="b-rot"> golden-angle rotation</label>
+    <label><input type="checkbox" id="b-tint"> tint layers</label>
+    <span style="margin-left:auto">isolate:</span>
+    <span id="b-iso"></span>
+  </div>
+  <figcaption>Everything here is the exact Buffer B loop; only the source pattern is procedural so it can run without the circuit buffer.</figcaption>
+</figure>
+
+<div class="note"><b>The whole effect in one breath:</b> one tiling image &middot; four copies riding the same zoom, evenly staggered &middot; each faded in and out by a sine window so the reset never shows &middot; a per-layer offset so they read as different depths &middot; sum, normalize, done. No perspective math anywhere &mdash; only looming and handoff.</div>
+
+<h2>The complete pass</h2>
+
+<p>Buffer B in full, assembled from the nodes above. Feed it a tiling source on <code class="inl">iChannel0</code> (wrap <code class="inl">repeat</code>, filter <code class="inl">linear</code>) and it composites the tunnel:</p>
+
+<pre class="code">// ============================================================
+//   Buffer B  ·  the zoom compositor
+//   iChannel0 = flat source, sampler: wrap REPEAT, filter LINEAR
+// ============================================================
+
+mat2 rot(float a){ float c = cos(a), s = sin(a); return mat2(c, s, -s, c); }
+
+#define ZL   4      // layers riding the zoom at once
+#define SPAN .7     // length of one layer's journey, in clock units
+
+void mainImage(out vec4 O, in vec2 U){
+    // Centre the coords and divide by height: the zoom pulls toward the
+    // middle and never stretches on a wide screen.
+    vec2 uv = (U - 0.5*iResolution.xy) / iResolution.y;
+
+    // The master depth clock. Swap iTime for a scroll offset to drive the
+    // dive by scrolling instead of by time.
+    float T = iTime * 0.12;
+
+    float g = 0.0, wsum = 0.0;
+    for(int i = 0; i &lt; ZL; i++){
+        // Same birth-to-reset arc for every layer, offset by an even slice
+        // of the cycle so the layers stay spread across it.
+        float t = mod(T + float(i)*(SPAN/float(ZL)), SPAN);
+
+        // Shrinking scale = zooming in. Big scale spreads lots of texture
+        // over the screen (far); scale -&gt; 0 magnifies a tiny patch (near).
+        float scale = SPAN - t;
+
+        // Crossfade window: 0 at birth, 1 mid-journey, 0 at reset. Both ugly
+        // ends sit at zero weight, so a layer wrapping around is invisible.
+        float w = sin(3.14159 * t / SPAN);
+
+        // Per-layer offset drops each layer onto a different patch of the
+        // tiling source, so they read as separate depth planes. Uncomment the
+        // rotation to spin each by the golden angle (~137.5 deg).
+        vec2 q = //rot(float(i)*2.399)*
+                 (uv*scale)
+                 + vec2(float(i)*3.31, float(i)*3.17);
+
+        // Accumulate the source's glow channel, weighted by the window.
+        g    += texture(iChannel0, q).y * w;
+        wsum += w;
+    }
+
+    // Divide by total weight -&gt; weighted average = the crossfade.
+    O = vec4(vec3(g / max(wsum, 1e-3)), 1.0);   // grayscale; colour later
+}</pre>
+
+<script>
+/* ============================================================
+   shared: layer tint matches the WebGL formula exactly
+   ============================================================ */
+function layerColor(i){
+  var b = 1.2*i;
+  var r = Math.round(255*(0.5+0.5*Math.cos(0.000 + b)));
+  var g = Math.round(255*(0.5+0.5*Math.cos(2.094 + b)));
+  var bl= Math.round(255*(0.5+0.5*Math.cos(4.188 + b)));
+  return "rgb("+r+","+g+","+bl+")";
+}
+
+var REDUCE = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ============================================================
+   single animation driver for every canvas (defined first so
+   the demos below can register with it)
+   ============================================================ */
+var driver = (function(){
+  var cbs = [], prev = null;
+  var api = { push:function(f){ cbs.push(f); }, dt:0 };
+  function loop(ms){
+    var t = ms/1000;
+    api.dt = prev==null ? 0 : (t - prev); prev = t;
+    for(var i=0;i<cbs.length;i++) cbs[i](t);
+    requestAnimationFrame(loop);
+  }
+  if(!REDUCE) requestAnimationFrame(loop);
+  return api;
+})();
+
+/* ============================================================
+   reusable WebGL2 zoom compositor  (the real Buffer B logic)
+   ============================================================ */
+function makeZoom(canvas, getOpts){
+  var gl = canvas.getContext("webgl2", { antialias:false });
+  if(!gl){
+    var d = document.createElement("div");
+    d.style.cssText = "color:#8f8a7e;padding:2rem;text-align:center;font-size:.85rem";
+    d.textContent = "This demo needs WebGL2.";
+    canvas.replaceWith(d);
+    return null;
+  }
+  var VS = "#version 300 es\n"+
+    "void main(){ vec2 p=vec2((gl_VertexID<<1)&2, gl_VertexID&2); gl_Position=vec4(p*2.0-1.0,0.0,1.0); }";
+  var FS = "#version 300 es\n"+
+    "precision highp float; out vec4 O;\n"+
+    "uniform vec2 uRes; uniform float uTime,uSpan,uSpeed;\n"+
+    "uniform int uZL,uOff,uRot,uTint,uIso;\n"+
+    "mat2 rot(float a){ float c=cos(a),s=sin(a); return mat2(c,s,-s,c); }\n"+
+    // procedural, seamlessly tiling stand-in for the circuit source
+    "float src(vec2 q){\n"+
+    "  vec2 g = fract(q)-0.5; vec2 id = floor(q);\n"+
+    "  float lines = smoothstep(0.035,0.0,abs(g.x)) + smoothstep(0.035,0.0,abs(g.y));\n"+
+    "  float r = fract(sin(dot(id, vec2(41.3,289.1)))*43758.5453);\n"+
+    "  float node = smoothstep(0.16,0.12,length(g))*step(0.55,r);\n"+
+    "  float trace = smoothstep(0.02,0.0,abs(g.x))*step(0.5,fract(r*7.0));\n"+
+    "  return clamp(lines*0.32 + node + trace*0.5, 0.0, 1.0);\n"+
+    "}\n"+
+    "vec3 tintOf(int i){ return 0.5+0.5*cos(vec3(0.0,2.094,4.188)+float(i)*1.2); }\n"+
+    "void main(){\n"+
+    "  vec2 U = gl_FragCoord.xy;\n"+
+    "  vec2 uv = (U - 0.5*uRes)/uRes.y;\n"+
+    "  float T = uTime*0.12*uSpeed;\n"+
+    "  if(uIso >= 0){\n"+           // isolate one raw layer -> shows the pop
+    "    int i = uIso;\n"+
+    "    float t = mod(T + float(i)*(uSpan/float(uZL)), uSpan);\n"+
+    "    float scale = uSpan - t;\n"+
+    "    vec2 q = uv*scale;\n"+
+    "    if(uRot==1) q = rot(float(i)*2.399)*q;\n"+
+    "    if(uOff==1) q += vec2(float(i)*3.31, float(i)*3.17);\n"+
+    "    float s = src(q);\n"+
+    "    vec3 col = (uTint==1) ? s*tintOf(i) : vec3(s);\n"+
+    "    O = vec4(col,1.0); return;\n"+
+    "  }\n"+
+    "  vec3 acc = vec3(0.0); float wsum = 0.0;\n"+
+    "  for(int i=0;i<8;i++){\n"+
+    "    if(i>=uZL) break;\n"+
+    "    float t = mod(T + float(i)*(uSpan/float(uZL)), uSpan);\n"+
+    "    float scale = uSpan - t;\n"+
+    "    float w = sin(3.14159265*t/uSpan);\n"+
+    "    vec2 q = uv*scale;\n"+
+    "    if(uRot==1) q = rot(float(i)*2.399)*q;\n"+
+    "    if(uOff==1) q += vec2(float(i)*3.31, float(i)*3.17);\n"+
+    "    float s = src(q);\n"+
+    "    vec3 c = (uTint==1) ? tintOf(i) : vec3(1.0);\n"+
+    "    acc += c*s*w; wsum += w;\n"+
+    "  }\n"+
+    "  O = vec4(acc/max(wsum,1e-3), 1.0);\n"+
+    "}";
+  function compile(type, src){
+    var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  gl.bindVertexArray(gl.createVertexArray());
+  var U = {};
+  ["uRes","uTime","uSpan","uSpeed","uZL","uOff","uRot","uTint","uIso"].forEach(function(n){
+    U[n] = gl.getUniformLocation(prog, n);
+  });
+  function resize(){
+    var dpr = Math.min(window.devicePixelRatio||1, 2);
+    var w = Math.max(1, (canvas.clientWidth*dpr)|0);
+    var h = Math.max(1, (canvas.clientHeight*dpr)|0);
+    if(canvas.width!==w || canvas.height!==h){ canvas.width=w; canvas.height=h; }
+    gl.viewport(0,0,canvas.width,canvas.height);
+  }
+  function render(timeSec){
+    resize();
+    var o = getOpts();
+    gl.uniform2f(U.uRes, canvas.width, canvas.height);
+    gl.uniform1f(U.uTime, timeSec);
+    gl.uniform1f(U.uSpan, o.span);
+    gl.uniform1f(U.uSpeed, o.speed);
+    gl.uniform1i(U.uZL, o.zl);
+    gl.uniform1i(U.uOff, o.off?1:0);
+    gl.uniform1i(U.uRot, o.rot?1:0);
+    gl.uniform1i(U.uTint, o.tint?1:0);
+    gl.uniform1i(U.uIso, (o.iso==null?-1:o.iso));
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  return { render:render };
+}
+
+/* ---------- hero: ambient, fixed settings ---------- */
+(function(){
+  var c = document.getElementById("hero");
+  var z = makeZoom(c, function(){ return { zl:4, span:0.7, speed:1, off:true, rot:true, tint:false, iso:null }; });
+  if(!z) return;
+  if(REDUCE){ z.render(6.0); return; }         // one static frame, no motion
+  driver.push(function(t){ z.render(t); });
+})();
+
+/* ---------- interactive ---------- */
+(function(){
+  var c = document.getElementById("big");
+  var zl=document.getElementById("b-zl"),   zlv=document.getElementById("b-zlv");
+  var sp=document.getElementById("b-span"), spv=document.getElementById("b-spanv");
+  var sd=document.getElementById("b-spd"),  sdv=document.getElementById("b-spdv");
+  var off=document.getElementById("b-off"), rot=document.getElementById("b-rot"), tint=document.getElementById("b-tint");
+  var isoBox=document.getElementById("b-iso"), playBtn=document.getElementById("b-play");
+  var iso = null, running = !REDUCE, clock = 0, last = null;
+
+  function buildIso(){
+    isoBox.innerHTML = "";
+    function mk(label, val){
+      var b = document.createElement("button");
+      b.textContent = label;
+      b.className = (iso===val ? "on" : "");
+      b.onclick = function(){ iso = val; buildIso(); };
+      isoBox.appendChild(b);
+    }
+    mk("off", null);
+    var n = +zl.value;
+    for(var i=0;i<n;i++) mk(String(i), i);
+  }
+  buildIso();
+
+  var opts = function(){ return {
+    zl:+zl.value, span:+sp.value, speed:+sd.value,
+    off:off.checked, rot:rot.checked, tint:tint.checked, iso:iso
+  }; };
+  var z = makeZoom(c, opts);
+
+  zl.oninput  = function(){ zlv.textContent = zl.value; if(iso!=null && iso >= +zl.value) iso=null; buildIso(); };
+  sp.oninput  = function(){ spv.textContent = (+sp.value).toFixed(2); };
+  sd.oninput  = function(){ sdv.textContent = (+sd.value).toFixed(1); };
+  playBtn.onclick = function(){ running=!running; playBtn.textContent = running?"pause":"play"; last=null; };
+
+  if(!z) return;
+  if(REDUCE){ playBtn.textContent="play"; z.render(6.0); }
+  driver.push(function(tReal){
+    if(running){ if(last!=null) clock += (tReal-last); last = tReal; } else { last = null; }
+    z.render(clock);
+  });
+})();
+
+/* ---------- node 5: the crossfade timing arc ---------- */
+(function(){
+  var canvas = document.getElementById("arc");
+  var lgd = document.getElementById("arc-lgd");
+  var ctx = canvas.getContext("2d");
+  var NL = 4;                       // fixed for the concept diagram
+  for(var i=0;i<NL;i++){
+    var s = document.createElement("span");
+    s.innerHTML = '<i class="sw" style="background:'+layerColor(i)+'"></i>layer '+i;
+    lgd.appendChild(s);
+  }
+  var T = 0;
+  function fit(){
+    var dpr = Math.min(window.devicePixelRatio||1, 2);
+    canvas.width  = (canvas.clientWidth*dpr)|0;
+    canvas.height = (canvas.clientHeight*dpr)|0;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function frame(dt){
+    fit();
+    var W = canvas.clientWidth, H = canvas.clientHeight;
+    var padL=14, padR=14, padT=16, padB=30;
+    var x0=padL, x1=W-padR, y0=H-padB, yTop=padT;
+    ctx.clearRect(0,0,W,H);
+
+    // the shared arc: w = sin(pi * x), x in [0,1]
+    ctx.beginPath();
+    for(var px=0; px<=100; px++){
+      var x = px/100, X = x0 + x*(x1-x0), Y = y0 - Math.sin(Math.PI*x)*(y0-yTop);
+      if(px===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+    }
+    ctx.strokeStyle = "#2e2b26"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.lineTo(x1,y0); ctx.lineTo(x0,y0); ctx.closePath();
+    ctx.fillStyle = "rgba(46,43,38,0.35)"; ctx.fill();
+
+    // axis labels
+    ctx.fillStyle = "#8f8a7e"; ctx.font = "10px ui-monospace, Menlo, monospace";
+    ctx.textAlign="left";   ctx.fillText("born · far", x0, H-10);
+    ctx.textAlign="center"; ctx.fillText("sharpest", (x0+x1)/2, yTop-4);
+    ctx.textAlign="right";  ctx.fillText("reset · near", x1, H-10);
+
+    // one dot per layer at its current phase p = (T + i/NL) mod 1
+    for(var i=0;i<NL;i++){
+      var p = ((T + i/NL) % 1 + 1) % 1;
+      var w = Math.sin(Math.PI*p);
+      var X = x0 + p*(x1-x0), Y = y0 - w*(y0-yTop);
+      ctx.strokeStyle = "rgba(143,138,126,0.35)"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(X,y0); ctx.lineTo(X,Y); ctx.stroke();
+      ctx.fillStyle = layerColor(i);
+      ctx.beginPath(); ctx.arc(X,Y,4.5,0,Math.PI*2); ctx.fill();
+    }
+    if(!REDUCE) T = (T + dt*0.11) % 1;
+  }
+  if(REDUCE){ T = 0.30; frame(0); }
+  else driver.push(function(){ frame(driver.dt); });
+})();
+</script>
+
+<script>
+/* ---------- dim the comments in code blocks (Shane-style) ---------- */
+(function(){
+  function esc(t){ return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  document.querySelectorAll("pre.code").forEach(function(pre){
+    var s = pre.textContent, out = "", i = 0, n = s.length;
+    while(i < n){
+      var slash = s.indexOf("/", i);
+      if(slash < 0){ out += esc(s.slice(i)); break; }
+      out += esc(s.slice(i, slash));
+      if(s[slash+1] === "*"){
+        var end = s.indexOf("*/", slash+2); end = (end < 0 ? n : end+2);
+        out += '<span class="c">' + esc(s.slice(slash, end)) + "</span>"; i = end;
+      } else if(s[slash+1] === "/"){
+        var nl = s.indexOf("\n", slash); nl = (nl < 0 ? n : nl);
+        out += '<span class="c">' + esc(s.slice(slash, nl)) + "</span>"; i = nl;
+      } else { out += esc("/"); i = slash+1; }
+    }
+    pre.innerHTML = out;
+  });
+})();
+</script>
+</main>
+</body>
+</html>

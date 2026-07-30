@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One tick of the wire automaton — a graph walk</title>
+<title>One tick of the wire automaton</title>
 <style>
   :root{
     --bg:      #161513;
@@ -120,9 +120,9 @@
 <main>
 
 <h1>One tick of the wire automaton</h1>
-<p class="byline">Your screenshot &mdash; <em>one arrival &rarr; born, two arrivals &rarr; nothing, two nets one gap</em> &mdash; is the whole machine. This page walks the decision every pixel makes each frame, as a graph: one node per rule, one picture per node. Words stay short; the pictures do the explaining. At the bottom, the full automaton runs live with a claim microscope.</p>
+<p class="byline"><em>one arrival &rarr; born, two arrivals &rarr; nothing, two nets one gap</em> &mdash; is the whole machine.</p>
 
-<h2>0. The five things a pixel can be</h2>
+<h2>The five things a pixel can be</h2>
 
 <p>Every pixel stores one small number. That number is a <strong>costume</strong>:</p>
 
@@ -137,7 +137,7 @@
 
 <div class="note"><b>Receiver's perspective.</b> A head never writes into the cell ahead of it &mdash; it can't; every pixel only writes itself. Movement happens because the <em>empty</em> cell ahead looks backwards, sees a head aimed at it, and dresses up as the next head. The old head undresses into trail. Two pixels acting alone = one thing appearing to move.</figcaption></div>
 
-<h2>1. The tick, as a graph</h2>
+<h2>The tick, as a graph</h2>
 
 <div class="graph">
 
