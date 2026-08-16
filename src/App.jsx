@@ -3,6 +3,7 @@ import ShaderCard from "./components/ShaderCard.jsx";
 import PlayerModal from "./components/PlayerModal.jsx";
 import Tutorials from "./components/Tutorials.jsx";
 import Loader from "./components/Loader.jsx";
+import Hero from "./components/Hero.jsx";
 import { tutorials } from "./lib/tutorials.js";
 import { addFromJson, localMeta } from "./lib/localShaders.js";
 
@@ -188,100 +189,102 @@ export default function App() {
             )}
           </p>
         </div>
+      </header>
 
-        {view === "home" && (
-          <>
-            <div className="toolbar">
-          <input
-            className="search"
-            type="search"
-            placeholder="Search name, description, tag…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search shaders"
-          />
-          <button className="btn add-btn" onClick={() => fileRef.current?.click()}>
-            ＋ Add shader
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".json,application/json"
-            style={{ display: "none" }}
-            onChange={onAddFile}
-          />
-          <select
-            className="sort"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            aria-label="Sort shaders"
-          >
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="likes">Most liked</option>
-            <option value="views">Most viewed</option>
-          </select>
-        </div>
+      {view === "home" && <Hero />}
 
-        <div className="filters">
-          <select
-            className="sort filter-select"
-            value={tag ?? ""}
-            onChange={(e) => setTag(e.target.value || null)}
-            aria-label="Filter by tag"
-          >
-            <option value="">All tags ({allTags.length})</option>
-            {allTags.map(([t, n]) => (
-              <option key={t} value={t}>
-                {t} ({n})
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="sort filter-select"
-            value={charBucket}
-            onChange={(e) => setCharBucket(e.target.value)}
-            aria-label="Filter by source length"
-          >
-            {Object.entries(CHAR_BUCKETS).map(([key, b]) => (
-              <option key={key || "any"} value={key}>
-                {b.label}
-              </option>
-            ))}
-          </select>
-
-          {(tag || charBucket) && (
-            <button
-              className="btn clear-btn"
-              onClick={() => {
-                setTag(null);
-                setCharBucket("");
-              }}
-            >
-              Clear filters
+      {view === "home" && (
+        <div className="toolbar-section">
+          <div className="toolbar">
+            <input
+              className="search"
+              type="search"
+              placeholder="Search name, description, tag…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search shaders"
+            />
+            <button className="btn add-btn" onClick={() => fileRef.current?.click()}>
+              ＋ Add shader
             </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".json,application/json"
+              style={{ display: "none" }}
+              onChange={onAddFile}
+            />
+            <select
+              className="sort"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              aria-label="Sort shaders"
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="likes">Most liked</option>
+              <option value="views">Most viewed</option>
+            </select>
+          </div>
+
+          <div className="filters">
+            <select
+              className="sort filter-select"
+              value={tag ?? ""}
+              onChange={(e) => setTag(e.target.value || null)}
+              aria-label="Filter by tag"
+            >
+              <option value="">All tags ({allTags.length})</option>
+              {allTags.map(([t, n]) => (
+                <option key={t} value={t}>
+                  {t} ({n})
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="sort filter-select"
+              value={charBucket}
+              onChange={(e) => setCharBucket(e.target.value)}
+              aria-label="Filter by source length"
+            >
+              {Object.entries(CHAR_BUCKETS).map(([key, b]) => (
+                <option key={key || "any"} value={key}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+
+            {(tag || charBucket) && (
+              <button
+                className="btn clear-btn"
+                onClick={() => {
+                  setTag(null);
+                  setCharBucket("");
+                }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+
+          {notice && <p className="notice mono">{notice}</p>}
+
+          {topTags.length > 0 && (
+            <div className="tags" role="listbox" aria-label="Filter by tag">
+              {topTags.map(([t, n]) => (
+                <button
+                  key={t}
+                  className={`tag ${tag === t ? "tag-on" : ""}`}
+                  onClick={() => setTag(tag === t ? null : t)}
+                >
+                  {t} <span className="mono tag-n">{n}</span>
+                </button>
+              ))}
+            </div>
           )}
         </div>
-
-        {notice && <p className="notice mono">{notice}</p>}
-
-        {topTags.length > 0 && (
-          <div className="tags" role="listbox" aria-label="Filter by tag">
-            {topTags.map(([t, n]) => (
-              <button
-                key={t}
-                className={`tag ${tag === t ? "tag-on" : ""}`}
-                onClick={() => setTag(tag === t ? null : t)}
-              >
-                {t} <span className="mono tag-n">{n}</span>
-              </button>
-            ))}
-          </div>
-        )}
-          </>
-        )}
-      </header>
+      )}
 
       {view === "tutorials" ? (
         <main aria-live="polite">

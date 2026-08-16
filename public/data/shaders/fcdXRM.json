@@ -1,0 +1,154 @@
+{
+   "ver": "0.1",
+   "info": {
+    "id": "fcdXRM",
+    "date": "1786632566",
+    "viewed": 82,
+    "name": "Day 478.1",
+    "description": "Playing with some agents",
+    "likes": 14,
+    "published": "Public API",
+    "usePreview": 0,
+    "tags": [
+     "laplace",
+     "agents",
+     "verctorfield"
+    ]
+   },
+   "renderpass": [
+    {
+     "inputs": [
+      {
+       "id": "4dXGR8",
+       "filepath": "/media/previz/buffer00.png",
+       "type": "buffer",
+       "channel": 1,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "clamp",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      },
+      {
+       "id": "XsXGR8",
+       "filepath": "/media/previz/buffer01.png",
+       "type": "buffer",
+       "channel": 0,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "repeat",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      }
+     ],
+     "outputs": [
+      {
+       "id": "4dfGRr",
+       "channel": 0
+      }
+     ],
+     "code": "/*\n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n    \n    ▓              🌟  KuKo Day 478  🌟 \n    \n    ▓ Image tab: color and helpers, u can also see the \n    ▓ length of smell and the angles \n    \n    ▓ Buffer A: State setup of the agents\n    \n    ▓ Buffer B: Diffusion, trail update of the agents \n    \n    ▓ I got the idea from @michael0884 on his Physarum Circular shader \n    ▓ https://www.shadertoy.com/view/wtKGW1\n    \n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n*/\n\nfloat so(float d) {return smoothstep(1.,0.,d);}\n\nvoid mainImage( out vec4 O, in vec2 I )\n{\n    vec3 v = T(iChannel0, I).rgb;\n    v /= (0.2+v);\n    \n    vec3 col = v + v*v;\n    \n    // some helpers to visualize the smell of the turns \n    // uncomment to see the angles and the head \n    /*\n    for(int i=0; i<N; i++)\n    {\n        vec4 a = T(iChannel1, vec2(i,0));\n        vec2 p = loop_d(I - a.xy),\n        // the head\n        hd = SD*vec2(cos(a.z),sin(a.z)),\n        l  = SD*vec2(cos(a.z+SA),sin(a.z+SA)),\n        r  = SD*vec2(cos(a.z-SA),sin(a.z-SA));\n        \n        float d1 = line(p, vec2(0), hd),\n        d2 = line(p, vec2(0), l) - .5,\n        d3 = line(p, vec2(0), r) - .5;\n        \n        vec3 bgCol = .5+.5*cos(float(i) * 0.2 + vec3(0,2,3)) * 0.7;\n        \n        col = mix(col, vec3(0.6), so(d1) *0.7);\n        col = mix(col, bgCol, so(d2) *0.8);\n        col = mix(col, bgCol, so(d3) *0.8);\n    }\n    */\n    \n    O = vec4(col,1);\n}\n",
+     "name": "Image",
+     "description": "",
+     "type": "image"
+    },
+    {
+     "inputs": [],
+     "outputs": [],
+     "code": "#define R iResolution.xy\n#define t iTime\n#define N 100\n\n// textures\n#define px(a, p) texture(a, vec2(p)/R)\n#define T(a, p) texelFetch(a, ivec2(p -0.5),0)\n// gaussian\n#define G(x,r) exp(-dot(x,x)/r/r)      \n\n// space cycle\n#define loop(p) mod(p, R)\n#define loop_d(p) mod(p + R*.5, R) - R*.5\n\n// HEAD and ANGLE, SPEED\n// Change the length of the head or the angle \nconst float SD = -20., SA = 1., SPEED = 1.;\n\n// TRAIL this will affect the turn as well \nconst float TRAIL = 0.01023;\n\n//functions\nfloat h1(vec2 p)\n{\n\tvec3 p3  = fract(vec3(p.xyx) * .1031);\n    p3 += dot(p3, p3.yzx + 33.33);\n    return fract((p3.x + p3.y) * p3.z);\n}\n\nvec2 H2(vec2 p)\n{\n\tvec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));\n    p3 += dot(p3, p3.yzx+33.33);\n    return fract((p3.xx+p3.yz)*p3.zy);\n}\n\nvec4 laplace(sampler2D ch, vec2 p)\n{\n    vec3 v = vec3(2,0,-2);\n    return T(ch, p+v.xy) + T(ch, p+v.zy)\n         + T(ch, p+v.yx) + T(ch, p+v.yz)-(4.*T(ch, p));\n}\n\nfloat line(vec2 p, vec2 a, vec2 b)\n{\n    vec2 pa = a-p, ab = b-a;\n    float h = clamp(dot(pa,ab)/dot(ab,ab), 0.,1.);\n    return length(pa - ab*h) ;\n}\n\n\n",
+     "name": "Common",
+     "description": "",
+     "type": "common"
+    },
+    {
+     "inputs": [
+      {
+       "id": "4dXGR8",
+       "filepath": "/media/previz/buffer00.png",
+       "type": "buffer",
+       "channel": 0,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "clamp",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      },
+      {
+       "id": "XsXGR8",
+       "filepath": "/media/previz/buffer01.png",
+       "type": "buffer",
+       "channel": 1,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "clamp",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      }
+     ],
+     "outputs": [
+      {
+       "id": "4dXGR8",
+       "channel": 0
+      }
+     ],
+     "code": "/*\n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n    \n    ▓              🌟  State of the agents  🌟 \n    \n    ▓ Buffer A: Setup the state, random position, left, \n    ▓ right turn and speed \n    \n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n*/\n\n\nvoid mainImage( out vec4 O, in vec2 I )\n{\n    // load my own buffer and read all potential agents\n    O = T(iChannel0, I);\n    \n    // which agent am I from my column \n    float id = floor(I.x);\n    \n    // only the first row and first N columns hold real agents \n    bool me = (I.y < 1.) && (id < float(N));\n    \n    if(me)\n    {\n        // how far my feelers reach and the angle the splay off my heading\n        // setup a Left and Right feeler we look sd ahead + sa\n        float l = px(iChannel1, loop(O.xy + SD*vec2(cos(O.z+SA),sin(O.z+SA)))).w;\n        float r = px(iChannel1, loop(O.xy + SD*vec2(cos(O.z-SA),sin(O.z-SA)))).w;\n    \n        // Steer, left and right are the gradients\n        O.z += .65*tanh(5.*(l-r));\n        \n        // move step 2px along the new heading \n        O.xy = loop(O.xy + SPEED*vec2(cos(O.z), sin(O.z)));\n    }\n    // not an agent stay empty\n    else O = vec4(0);\n    \n    // at frame 0 scatter agents at random positions \n    if(iFrame < 1)\n        if(me)\n        {\n            O.xy = R * H2(vec2(id,1));     // random position \n            O.z = 6.2831 * h1(vec2(id,1)); // random heading\n            O.w = 0.;\n        \n        } else O = vec4(0);            \n}",
+     "name": "Buffer A",
+     "description": "",
+     "type": "buffer"
+    },
+    {
+     "inputs": [
+      {
+       "id": "4dXGR8",
+       "filepath": "/media/previz/buffer00.png",
+       "type": "buffer",
+       "channel": 0,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "repeat",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      },
+      {
+       "id": "XsXGR8",
+       "filepath": "/media/previz/buffer01.png",
+       "type": "buffer",
+       "channel": 1,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "repeat",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      }
+     ],
+     "outputs": [
+      {
+       "id": "XsXGR8",
+       "channel": 0
+      }
+     ],
+     "code": "/*\n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n    \n    ▓              🌟  Update the agents  🌟 \n    \n    ▓ Buffer B: Diffusion, trail, read the particles  \n    \n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n*/\n\nvoid mainImage( out vec4 O, in vec2 I )\n{\n    // we read our current texture, so we load who was our last frame\n    O = T(iChannel1, I);\n    \n    // diffuse with laplace\n    O += 0.25 * laplace(iChannel1, I);\n    \n    // decay with with the output \n    O -= TRAIL * O;\n    \n    // deposite: read every agent and if one is near, add a bump \n    //float dep = 0.;\n    vec3 dep = vec3(0);\n    float smell = 0.0;\n    for(int i=0; i<N; i++)\n    {\n        // agent i lives at (i,0) on every other buffer\n        vec4 a = T(iChannel0, vec2(i,0));\n        \n        // set up some color according to the particle i\n        vec3 col = .5+.5*cos(float(i) * 0.015 + vec3(3,2,1) + t*.5);\n        \n        // how close am I to agent i: loop wraps the distance around\n        // deposite the spheres\n        float w = G(loop_d(I-a.xy), 2.0);\n        dep += (w) * col;\n        smell += w;\n    }\n    \n    // fold the fresh trail at half the strength \n    //O += .5 * dep;\n    O.xyz += .5 * dep;\n    O.w += .5 * smell;\n    // safety net to prevent blow up \n    O = clamp(O, vec4(0), vec4(60));\n    //O.xyz = clamp(O.xyz, vec3(0), vec3(60));\n    \n    if(iFrame < 1) O = vec4(0);\n}",
+     "name": "Buffer B",
+     "description": "",
+     "type": "buffer"
+    }
+   ]
+  }

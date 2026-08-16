@@ -169,12 +169,52 @@ html, body {
 .tut-desc { color: var(--dim); font-size: 0.85rem; line-height: 1.4; }
 .tut-file { color: var(--dim); font-size: 0.72rem; margin-top: 4px; }
 
+/* ---------------- hero ---------------- */
+
+/* Full-bleed: break out of .app's max-width/padding to span the viewport. */
+.hero {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  height: clamp(280px, 42vw, 560px);
+  margin-top: 8px;
+  overflow: hidden;
+  isolation: isolate; /* scope mix-blend-mode to this layer, not the whole page */
+  pointer-events: none; /* decorative — never blocks clicks on nav/toolbar/grid */
+  background: var(--ink);
+}
+
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hero-title {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(4rem, 27vw, 24rem);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--bone);
+  mix-blend-mode: overlay;
+}
+
 /* ---------------- toolbar ---------------- */
+
+.toolbar-section {
+  margin-top: 24px;
+}
 
 .toolbar {
   display: flex;
   gap: 10px;
-  margin-top: 24px;
 }
 
 .search, .sort {
