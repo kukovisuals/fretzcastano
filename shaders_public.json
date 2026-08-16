@@ -1,7 +1,7 @@
 {
  "userName": "kukovisuals",
- "date": "2026-08-16T01:06:31.455Z",
- "numShaders": 441,
+ "date": "2026-08-16T17:04:57.665Z",
+ "numShaders": 442,
  "shaders": [
   {
    "ver": "0.1",
@@ -901,7 +901,7 @@
    "info": {
     "id": "3cXcWB",
     "date": "1755972217",
-    "viewed": 85,
+    "viewed": 86,
     "name": "KuKo #122",
     "description": "l-Systems, Lindenmayer, playing wit  a tree.",
     "likes": 5,
@@ -967,7 +967,7 @@
    "info": {
     "id": "wcXyW2",
     "date": "1756075779",
-    "viewed": 244,
+    "viewed": 245,
     "name": "KuKo #123",
     "description": "l-Systems, Lindenmayer, playing with a tree.",
     "likes": 17,
@@ -2145,7 +2145,7 @@
    "info": {
     "id": "wcsfW2",
     "date": "1758055453",
-    "viewed": 133,
+    "viewed": 134,
     "name": "KuKo Pumpkin 101",
     "description": "Halloween mode. sdf of a pumpkin simple ",
     "likes": 9,
@@ -3045,7 +3045,7 @@
    "info": {
     "id": "t3XyWH",
     "date": "1759537594",
-    "viewed": 105,
+    "viewed": 106,
     "name": "KuKo #163",
     "description": "Ghost, pumpkin",
     "likes": 6,
@@ -3375,7 +3375,7 @@
    "info": {
     "id": "t3lyWf",
     "date": "1760317481",
-    "viewed": 55,
+    "viewed": 56,
     "name": "KuKo #172",
     "description": "pumpkins",
     "likes": 5,
@@ -3455,7 +3455,7 @@
    "info": {
     "id": "t3fyDs",
     "date": "1760363294",
-    "viewed": 194,
+    "viewed": 195,
     "name": "KuKo #173",
     "description": "pumpkin + flame ",
     "likes": 10,
@@ -3488,7 +3488,7 @@
    "info": {
     "id": "3Xjyzz",
     "date": "1760479920",
-    "viewed": 66,
+    "viewed": 67,
     "name": "KuKo #174",
     "description": "pumpkin + flame ",
     "likes": 6,
@@ -3521,7 +3521,7 @@
    "info": {
     "id": "w32yzh",
     "date": "1760572535",
-    "viewed": 105,
+    "viewed": 106,
     "name": "KuKo #175",
     "description": "pumpkin + flame ",
     "likes": 9,
@@ -3821,7 +3821,7 @@
    "info": {
     "id": "t3ScRy",
     "date": "1761133135",
-    "viewed": 127,
+    "viewed": 128,
     "name": "KuKo #182",
     "description": "Terrain of mountains with some noise texture.",
     "likes": 10,
@@ -6948,10 +6948,10 @@
    "info": {
     "id": "wfVyDy",
     "date": "1765150024",
-    "viewed": 86,
+    "viewed": 88,
     "name": "KuKo #228.1",
     "description": "Written during a cloudy New Year's eve...",
-    "likes": 7,
+    "likes": 8,
     "published": "Public API",
     "usePreview": 1,
     "tags": [
@@ -14833,7 +14833,7 @@
    "info": {
     "id": "sXX3WN",
     "date": "1778114148",
-    "viewed": 66,
+    "viewed": 67,
     "name": "KuKo #378.1",
     "description": "everyday GLSL  shader",
     "likes": 7,
@@ -20755,7 +20755,7 @@
    "info": {
     "id": "fctSz8",
     "date": "1786462712",
-    "viewed": 117,
+    "viewed": 119,
     "name": "Day 476",
     "description": "gradient, vector field",
     "likes": 13,
@@ -20880,7 +20880,7 @@
    "info": {
     "id": "NctSR4",
     "date": "1786546640",
-    "viewed": 32,
+    "viewed": 33,
     "name": "Day 477.1",
     "description": "Laplacian of Gaussian:\nhttps://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm",
     "likes": 4,
@@ -20920,7 +20920,7 @@
    "info": {
     "id": "7cdSR4",
     "date": "1786547255",
-    "viewed": 39,
+    "viewed": 40,
     "name": "Day 477.2",
     "description": "Laplace\nhttps://en.wikipedia.org/wiki/Discrete_Laplace_operator",
     "likes": 1,
@@ -20952,7 +20952,7 @@
    "info": {
     "id": "fcdXRM",
     "date": "1786632566",
-    "viewed": 82,
+    "viewed": 85,
     "name": "Day 478.1",
     "description": "Playing with some agents",
     "likes": 14,
@@ -21106,7 +21106,7 @@
    "info": {
     "id": "sc3XWr",
     "date": "1786744206",
-    "viewed": 30,
+    "viewed": 32,
     "name": "Day 479.2",
     "description": "Playing with some agents",
     "likes": 3,
@@ -21260,7 +21260,7 @@
    "info": {
     "id": "7fcXDr",
     "date": "1786737115",
-    "viewed": 36,
+    "viewed": 39,
     "name": "Day 479.1",
     "description": "Playing with some agents + voronoi tracking ",
     "likes": 5,
@@ -21415,10 +21415,10 @@
    "info": {
     "id": "sf3XD8",
     "date": "1786808094",
-    "viewed": 40,
+    "viewed": 56,
     "name": "Day 480.2",
     "description": "Playing with some agents + voronoi tracking ",
-    "likes": 4,
+    "likes": 7,
     "published": "Public API",
     "usePreview": 0,
     "tags": [
@@ -21517,6 +21517,161 @@
       }
      ],
      "code": "/*\n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n    \n    ▓              🌟  State of the agents  🌟 \n    \n    ▓ Buffer A: Setup the state, random position, left, \n    ▓ right turn and speed \n    \n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n*/\n\n// check them neighbours\nvoid check(inout vec4 O, vec2 I, vec2 d)\n{\n    vec4 n = T(iChannel0, loop(I + d));\n    if(length(loop_d(n.xy - I)) < length(loop_d(O.xy - I)))\n        O = n;\n}\n\nvoid mainImage( out vec4 O, in vec2 I )\n{\n    // load my own buffer and read all potential agents\n    O = T(iChannel0, I);\n    \n    // only the first row and first N columns hold real agents \n    //bool me = (I.y < 1.) && (id < float(N));\n    for(int i=1; i<5; i++)\n    {\n        // agent i lives at (i,0) on every other buffer\n        check(O, I, vec2( i, 0));\n        check(O, I, vec2(-i, 0));\n        check(O, I, vec2( 0, i));\n        check(O, I, vec2( 0,-i));\n    }\n    \n    //if(me)\n    {\n        // how far my feelers reach and the angle the splay off my heading\n        // setup a Left and Right feeler we look sd ahead + sa\n        float l = px(iChannel1, loop(O.xy + SD*vec2(cos(O.z+SA),sin(O.z+SA)))).w;\n        float r = px(iChannel1, loop(O.xy + SD*vec2(cos(O.z-SA),sin(O.z-SA)))).w;\n    \n        // Steer, left and right are the gradients\n        O.z += .5*tanh(6.*(l-r));\n        \n        // move step 2px along the new heading \n        O.xy = loop(O.xy + SPEED*vec2(cos(O.z), sin(O.z)));\n    }\n    // not an agent stay empty\n    //else O = vec4(0);\n    \n    // after the check loop, before the move\n    if( iFrame > 200 && length(loop_d(O.xy - I)) > 100.)\n    {\n        O.xy = I;                              // this pixel claims a new particle\n        O.z  = 6.2831 * (floor(h1(I + float(iFrame)) * 4.0) / 4.0 ); // random heading\n        O.w  = h1(I + float(iFrame));          // fresh identity\n    }\n    \n    // at frame 0 scatter agents at random positions \n    if(iFrame < 1)\n        //if(me)\n        {\n            O.xy = GRID * (floor(I/GRID)+.5);\n            O.z = 6.2831 * (floor(h1(O.xy) * 4.0) / 4.0 ); // random heading\n            O.w = h1(O.xy); \n        } \n}",
+     "name": "Buffer A",
+     "description": "",
+     "type": "buffer"
+    },
+    {
+     "inputs": [
+      {
+       "id": "4dXGR8",
+       "filepath": "/media/previz/buffer00.png",
+       "type": "buffer",
+       "channel": 0,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "repeat",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      },
+      {
+       "id": "XsXGR8",
+       "filepath": "/media/previz/buffer01.png",
+       "type": "buffer",
+       "channel": 1,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "repeat",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      }
+     ],
+     "outputs": [
+      {
+       "id": "XsXGR8",
+       "channel": 0
+      }
+     ],
+     "code": "/*\n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n    \n    ▓              🌟  Update the agents  🌟 \n    \n    ▓ Buffer B: Diffusion, trail, read the particles  \n    \n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n*/\n\nvoid mainImage( out vec4 O, in vec2 I )\n{\n    // we read our current texture, so we load who was our last frame\n    O = T(iChannel1, I);\n    \n    // diffuse with laplace\n    O += DT * laplace(iChannel1, I);\n    \n    // decay with with the output \n    O -= TRAIL * O;\n    \n    // deposite: read every agent and if one is near, add a bump \n    //float dep = 0.;\n    vec3 dep = vec3(0);\n    float smell = 0.0;\n    \n    vec4 a = T(iChannel0, I);\n    \n    //vec3 col = 0.5 + 0.5 * cos(2.2831 * a.w + vec3(.0, 2.0, 4.0));\n    vec3 col = 0.5 + 0.5 * cos(2.1416 * a.w + vec3(.3,1.5,4.5)+1.);\n    \n    // how close am I to agent i: loop wraps the distance around\n    // deposite the spheres\n    float w = G(loop_d(I-a.xy), 2.0);\n    dep += (w) * col ;\n    smell += w;\n    \n    // fold the fresh trail at half the strength \n    //O += .5 * dep;\n    O.xyz += .5 * dep;\n    O.w += .5 * smell;\n    // safety net to prevent blow up \n    O = clamp(O, vec4(0), vec4(60));\n    //O.xyz = clamp(O.xyz, vec3(0), vec3(60));\n    \n    if(iFrame < 1) O = vec4(0);\n}",
+     "name": "Buffer B",
+     "description": "",
+     "type": "buffer"
+    }
+   ]
+  },
+  {
+   "ver": "0.1",
+   "info": {
+    "id": "7ccSWH",
+    "date": "1786897480",
+    "viewed": 10,
+    "name": "Day 481",
+    "description": "Playing with some agents + voronoi tracking ",
+    "likes": 1,
+    "published": "Public API",
+    "usePreview": 0,
+    "tags": [
+     "laplace",
+     "agents",
+     "voronoitracking",
+     "verctorfield"
+    ]
+   },
+   "renderpass": [
+    {
+     "inputs": [
+      {
+       "id": "4dXGR8",
+       "filepath": "/media/previz/buffer00.png",
+       "type": "buffer",
+       "channel": 1,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "clamp",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      },
+      {
+       "id": "XsXGR8",
+       "filepath": "/media/previz/buffer01.png",
+       "type": "buffer",
+       "channel": 0,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "repeat",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      }
+     ],
+     "outputs": [
+      {
+       "id": "4dfGRr",
+       "channel": 0
+      }
+     ],
+     "code": "/*\n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n    \n    ▓              🌟  KuKo Day 481  🌟 \n    \n    ▓ Image tab: color and helpers, u can also see the \n    ▓ length of smell and the angles \n    \n    ▓ Buffer A: State setup of the agents\n    \n    ▓ Buffer B: Diffusion, trail update of the agents \n    \n    ▓ I got the idea from @michael0884 on his Physarum Circular shader \n    ▓ https://www.shadertoy.com/view/wtKGW1\n    \n    ▓ Voronoi tracking I belive is from @Fabrice\n    ▓ https://www.shadertoy.com/view/wtyGWc\n    \n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n*/\n\nfloat so(float d) {return smoothstep(1.,0.,d);}\n\nvoid mainImage( out vec4 O, in vec2 I )\n{\n    vec3 v = T(iChannel0, I).rgb;\n\n    v /= (0.2+v);\n    v = v + v*v * 0.9;\n    \n    O = vec4(v,1);\n}\n",
+     "name": "Image",
+     "description": "",
+     "type": "image"
+    },
+    {
+     "inputs": [],
+     "outputs": [],
+     "code": "#define R iResolution.xy\n#define t iTime\n#define GRID 100.\n\n// textures\n#define px(a, p) texture(a, vec2(p)/R)\n#define T(a, p) texelFetch(a, ivec2(p -0.5),0)\n// gaussian\n#define G(x,r) exp(-dot(x,x)/r/r)      \n\n// space cycle\n#define loop(p) mod(p, R)\n#define loop_d(p) mod(p + R*.5, R) - R*.5\n\n// HEAD, ANGLE, SPEED\n// Change the length of the head or the angle \nfloat SD = -10., SA = 1.5, SPEED = 1.;\n\n// TRAIL this will affect the turn as well \n// LAPLACIAN diffuse \nconst float TRAIL = 0.009005, DT = 0.25;\n\n//functions\nfloat h1(vec2 p)\n{\n\tvec3 p3  = fract(vec3(p.xyx) * .1031);\n    p3 += dot(p3, p3.yzx + 33.33);\n    return fract((p3.x + p3.y) * p3.z);\n}\n\nvec2 H2(vec2 p)\n{\n\tvec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));\n    p3 += dot(p3, p3.yzx+33.33);\n    return fract((p3.xx+p3.yz)*p3.zy);\n}\n\nvec4 laplace(sampler2D ch, vec2 p)\n{\n    vec3 v = vec3(1,0,-1);\n    return T(ch, p+v.xy) + T(ch, p+v.xy)\n         + T(ch, p+v.yx) + T(ch, p+v.yz)-(4.*T(ch, p));\n}\n\nfloat line(vec2 p, vec2 a, vec2 b)\n{\n    vec2 pa = a-p, ab = b-a;\n    float h = clamp(dot(pa,ab)/dot(ab,ab), 0.,1.);\n    return length(pa - ab*h) ;\n}\n\n\n",
+     "name": "Common",
+     "description": "",
+     "type": "common"
+    },
+    {
+     "inputs": [
+      {
+       "id": "4dXGR8",
+       "filepath": "/media/previz/buffer00.png",
+       "type": "buffer",
+       "channel": 0,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "clamp",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      },
+      {
+       "id": "XsXGR8",
+       "filepath": "/media/previz/buffer01.png",
+       "type": "buffer",
+       "channel": 1,
+       "sampler": {
+        "filter": "linear",
+        "wrap": "clamp",
+        "vflip": "true",
+        "srgb": "false",
+        "internal": "byte"
+       },
+       "published": 1
+      }
+     ],
+     "outputs": [
+      {
+       "id": "4dXGR8",
+       "channel": 0
+      }
+     ],
+     "code": "/*\n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n    \n    ▓              🌟  State of the agents  🌟 \n    \n    ▓ Buffer A: Setup the state, random position, left, \n    ▓ right turn and speed \n    \n    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n*/\n\n// check them neighbours\nvoid check(inout vec4 O, vec2 I, vec2 d)\n{\n    vec4 n = T(iChannel0, loop(I + d));\n    if(length(loop_d(n.xy - I)) < length(loop_d(O.xy - I)))\n        O = n;\n}\n\nvoid mainImage( out vec4 O, in vec2 I )\n{\n    // load my own buffer and read all potential agents\n    O = T(iChannel0, I);\n    \n    // only the first row and first N columns hold real agents \n    //bool me = (I.y < 1.) && (id < float(N));\n    for(int i=1; i<5; i++)\n    {\n        // agent i lives at (i,0) on every other buffer\n        check(O, I, vec2( i, 0));\n        check(O, I, vec2(-i, 0));\n        check(O, I, vec2( 0, i));\n        check(O, I, vec2( 0,-i));\n    }\n    \n    float nt = mod(iTime,10.) < 9. ? 1.:-1.;\n    SA *= nt;\n    \n    // how far my feelers reach and the angle the splay off my heading\n    // setup a Left and Right feeler we look sd ahead + sa\n    float l = px(iChannel1, loop(O.xy + SD*vec2(cos(O.z+SA),sin(O.z+SA)))).w;\n    float r = px(iChannel1, loop(O.xy + SD*vec2(cos(O.z-SA),sin(O.z-SA)))).w;\n    \n    // Steer, left and right are the gradients\n    O.z += .5*tanh(6.*(l-r));\n\n    // move step 2px along the new heading \n    O.xy = loop(O.xy + SPEED*vec2(cos(O.z), sin(O.z)));\n\n    // not an agent stay empty\n    //else O = vec4(0);\n   \n    // after the check loop, before the move\n    bool newMe =(  ( iMouse.z > 0. \n        && length(loop_d(iMouse.xy - I)) < 5.)  \n        || (iFrame > 1100 && length(loop_d(O.xy - I)) > 150.));\n        \n    if( newMe )\n    {\n        O.xy = I;                              // this pixel claims a new particle\n        O.z  = 6.2831 * (floor(h1(I + float(iFrame)) * 4.0) / 4.0 ); // random heading\n        O.w  = h1(I + float(iFrame));          // fresh identity\n    }\n    \n    \n    // at frame 0 scatter agents at random positions \n    if(iFrame < 1)\n        //if(me)\n        {\n            O.xy = GRID * (floor(I/GRID)+.5);\n            O.z = 6.2831 * (floor(h1(O.xy) * 4.0) / 4.0 ); // random heading\n            O.w = h1(O.xy); \n        } \n}",
      "name": "Buffer A",
      "description": "",
      "type": "buffer"
