@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup — home hero (shader fcdXRM + "KUKO" blend)</title>
+<style>
+  /* Theme variables copied verbatim from src/styles.css — nothing hardcoded below. */
+  :root {
+    --ink: #0b0c0e;
+    --surface: #14161a;
+    --line: #23262c;
+    --bone: #e9e5da;
+    --dim: #8b8f97;
+    --membrane: #52d6c3;
+    --rim: #e06a9f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--bone);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  /* ---------- mockup-only chrome (not part of the real app) ---------- */
+  .mockup-banner {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    color: var(--dim);
+    font-size: 12px;
+    padding: 8px 16px;
+    text-align: center;
+  }
+  .mockup-banner b { color: var(--membrane); }
+
+  .mode-switcher {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 50;
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 6px;
+  }
+  .mode-switcher button {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .mode-switcher button.active {
+    color: var(--ink);
+    background: var(--membrane);
+    border-color: var(--membrane);
+  }
+
+  /* ---------- real nav (mirrors .masthead nav row in App.jsx) ---------- */
+  .mainnav {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-link {
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .nav-link.nav-on { color: var(--membrane); }
+  .brand-mini { margin-left: auto; font-size: 14px; color: var(--dim); }
+  .brand-mini .accent { color: var(--membrane); }
+
+  /* ---------- hero: full-bleed, sits ABOVE the grid, BEFORE the toolbar ---------- */
+  .hero {
+    position: relative;
+    width: 100%;
+    height: min(64vh, 560px);
+    overflow: hidden;
+    isolation: isolate; /* new stacking context: blending happens against .hero-bg only */
+  }
+
+  /* Stand-in for the WebGL2 canvas playing shader fcdXRM (Physarum agents).
+     Busy, high-contrast art on purpose — a flat placeholder would make it
+     impossible to judge whether the blend mode is actually doing anything. */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 20% 30%, var(--membrane) 0%, transparent 35%),
+      radial-gradient(circle at 80% 70%, var(--rim) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(233,229,218,0.15) 0%, transparent 55%),
+      conic-gradient(from 90deg at 50% 50%, var(--ink), var(--surface), var(--ink), var(--surface), var(--ink));
+    filter: saturate(1.3) contrast(1.1);
+  }
+  .hero-bg::after {
+    /* fine organic streaks, roughly evoking the physarum agent trails */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-conic-gradient(
+      from 0deg at 50% 50%,
+      rgba(82, 214, 195, 0.08) 0deg 4deg,
+      transparent 4deg 12deg
+    );
+    mix-blend-mode: soft-light;
+  }
+  .hero-placeholder-tag {
+    position: absolute;
+    bottom: 10px;
+    left: 12px;
+    font-size: 11px;
+    color: var(--dim);
+    background: rgba(11, 12, 14, 0.6);
+    padding: 3px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  /* "KUKO" overlay — a sibling of .hero-bg, blended against it via mix-blend-mode */
+  .hero-title {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    pointer-events: none;
+    font-size: clamp(72px, 18vw, 260px);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--bone);
+    mix-blend-mode: overlay; /* switched live by .mode-switcher below */
+    user-select: none;
+  }
+
+  /* ---------- toolbar: now AFTER the hero, BEFORE the grid ---------- */
+  .toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .search {
+    flex: 1;
+    min-width: 220px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--bone);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  .btn, .sort {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--bone);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* ---------- grid preview (mock only) ---------- */
+  .grid-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 20px 24px 40px;
+  }
+  .card {
+    aspect-ratio: 16/10;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .notes {
+    max-width: 720px;
+    margin: 0 auto 40px;
+    padding: 16px 24px;
+    color: var(--dim);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .notes code { color: var(--membrane); }
+</style>
+</head>
+<body>
+
+  <div class="mockup-banner">
+    <b>MOCKUP</b> — layout + blend mode only. Hero art below is a CSS placeholder standing in for shader
+    <b>fcdXRM</b>; no WebGL, no production code touched. Toggle blend modes bottom-right.
+  </div>
+
+  <nav class="mainnav">
+    <button class="nav-link nav-on">Home</button>
+    <button class="nav-link">Tutorials ▾</button>
+    <span class="brand-mini">KuKo<span class="accent">&nbsp;Visuals</span></span>
+  </nav>
+
+  <!-- 1. HERO — full-bleed, above the grid, clicks pass through -->
+  <section class="hero" aria-hidden="true">
+    <div class="hero-bg"></div>
+    <div class="hero-placeholder-tag">placeholder for shader fcdXRM (Physarum agents)</div>
+    <h1 class="hero-title" id="heroTitle">KUKO</h1>
+  </section>
+
+  <!-- 2. TOOLBAR / SEARCH — comes AFTER the hero, still above the grid -->
+  <div class="toolbar-row">
+    <input class="search" type="search" placeholder="Search name, description, tag…" />
+    <button class="btn">＋ Add shader</button>
+    <select class="sort"><option>Newest first</option></select>
+  </div>
+
+  <!-- 3. GRID — untouched, below the toolbar -->
+  <main class="grid-preview">
+    <div class="card"></div><div class="card"></div><div class="card"></div>
+    <div class="card"></div><div class="card"></div><div class="card"></div>
+    <div class="card"></div><div class="card"></div><div class="card"></div>
+    <div class="card"></div><div class="card"></div><div class="card"></div>
+  </main>
+
+  <div class="notes">
+    <p><b>Why the blend is visible now:</b> <code>.hero-title</code> is a sibling of <code>.hero-bg</code>,
+    not text painted over its own background. <code>isolation: isolate</code> on <code>.hero</code> scopes
+    the blend to just these two layers, so <code>mix-blend-mode</code> composites "KUKO" against the busy
+    placeholder art directly beneath it. The previous pass likely blended against a flat/low-contrast
+    background, which reads as "not doing anything" even when the CSS is correct.</p>
+    <p><b>Layout fix:</b> the search/toolbar row is now a normal-flow sibling <em>after</em> <code>.hero</code>,
+    not stacked on top of it — so it never overlaps the hero and stays fully clickable.</p>
+    <p><b>Not visual, called out for the real build:</b> the production hero must (1) enforce the existing
+    3-megapixel canvas cap (<code>MAX_PIXELS</code> in <code>PlayerModal.jsx</code>), (2) pause rendering via
+    the Page Visibility API when the tab is hidden, and (3) run fcdXRM through the ping-pong multipass
+    pipeline (Buffer A/B + Common + Image) in <code>shadertoyRenderer.js</code> — not as a single pass.
+    The hero layers keep <code>pointer-events: none</code> throughout.</p>
+  </div>
+
+  <div class="mode-switcher" role="group" aria-label="Blend mode">
+    <button data-mode="overlay" class="active">overlay</button>
+    <button data-mode="screen">screen</button>
+    <button data-mode="multiply">multiply</button>
+  </div>
+
+  <script>
+    const title = document.getElementById('heroTitle');
+    document.querySelectorAll('.mode-switcher button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-switcher button').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        title.style.mixBlendMode = btn.dataset.mode;
+      });
+    });
+  </script>
+
+</body>
+</html>
