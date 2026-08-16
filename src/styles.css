@@ -199,7 +199,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(4rem, 14vw, 11rem);
+  font-size: clamp(4rem, 27vw, 24rem);
   font-weight: 750;
   letter-spacing: -0.02em;
   color: var(--bone);
