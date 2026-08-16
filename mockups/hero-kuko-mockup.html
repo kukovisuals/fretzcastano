@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — home hero: shader fcdXRM + "KUKO" blend overlay</title>
+<style>
+  /* Theme variables copied from src/styles.css — mockup only, not wired to the app */
+  :root {
+    --ink: #0b0c0e;
+    --surface: #14161a;
+    --line: #23262c;
+    --bone: #e9e5da;
+    --dim: #8b8f97;
+    --membrane: #52d6c3;
+    --rim: #e06a9f;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--bone);
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  /* ---------------- mockup-only chrome (not part of the real design) ---------------- */
+
+  .mockup-banner {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 20px;
+    font-size: 0.82rem;
+    color: var(--dim);
+    text-align: center;
+  }
+  .mockup-banner strong { color: var(--rim); }
+
+  .blend-switcher {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 50;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    gap: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+  .blend-switcher button {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.75rem;
+    background: transparent;
+    color: var(--dim);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .blend-switcher button.on {
+    color: var(--ink);
+    background: var(--membrane);
+    border-color: var(--membrane);
+  }
+
+  /* ---------------- hero ---------------- */
+
+  .hero {
+    position: relative;
+    isolation: isolate; /* contains blend-mode compositing to this section */
+    overflow: hidden;
+    min-height: 66vh;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* Stand-in for the live shadertoyRenderer canvas.
+     Static placeholder frame only — the real hero renders fcdXRM through
+     shadertoyRenderer.js (ping-pong pipeline, Buffer A/B + Common + Image). */
+  .hero-shader {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 45% at 30% 25%, rgba(82, 214, 195, 0.35), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 75% 70%, rgba(224, 106, 159, 0.22), transparent 65%),
+      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(82, 214, 195, 0.18), transparent 70%),
+      repeating-radial-gradient(circle at 50% 50%, rgba(233, 229, 218, 0.05) 0px, transparent 2px, transparent 26px),
+      var(--ink);
+  }
+  .hero-shader::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(115deg, rgba(233, 229, 218, 0.04) 0px, rgba(233, 229, 218, 0.04) 1px, transparent 1px, transparent 14px),
+      repeating-linear-gradient(25deg, rgba(82, 214, 195, 0.05) 0px, rgba(82, 214, 195, 0.05) 1px, transparent 1px, transparent 18px);
+    mix-blend-mode: screen;
+  }
+  .hero-shader-label {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    font-size: 0.7rem;
+    color: rgba(233, 229, 218, 0.45);
+    letter-spacing: 0.02em;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 20px 24px 0;
+    font-size: 0.9rem;
+    color: var(--dim);
+  }
+  .hero-nav .nav-on { color: var(--bone); font-weight: 600; }
+
+  .hero-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    pointer-events: none; /* the overlay text never intercepts clicks either */
+  }
+
+  .kuko {
+    margin: 0;
+    font-size: clamp(4.5rem, 18vw, 13rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--bone);
+    mix-blend-mode: overlay; /* default per issue — switch with the control, bottom-right */
+    user-select: none;
+  }
+  .kuko.blend-screen { mix-blend-mode: screen; }
+  .kuko.blend-multiply { mix-blend-mode: multiply; }
+
+  .hero-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 24px 28px;
+  }
+  .hero-toolbar input,
+  .hero-toolbar select,
+  .hero-toolbar button {
+    font-family: inherit;
+    font-size: 0.85rem;
+    background: rgba(20, 22, 26, 0.72);
+    backdrop-filter: blur(6px);
+    color: var(--bone);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+  .hero-toolbar input { flex: 1; min-width: 200px; }
+
+  /* ---------------- grid preview (below the hero, normal flow) ---------------- */
+
+  .app { max-width: 1560px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  .section-label {
+    font-size: 0.8rem;
+    color: var(--dim);
+    margin: 0 0 14px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    aspect-ratio: 16 / 10;
+    display: flex;
+    align-items: flex-end;
+    padding: 10px;
+    font-size: 0.75rem;
+    color: var(--dim);
+    cursor: pointer;
+  }
+  .card:hover { border-color: var(--membrane); color: var(--bone); }
+
+  .notes {
+    margin-top: 40px;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+    font-size: 0.85rem;
+    color: var(--dim);
+    max-width: 62ch;
+  }
+  .notes h2 { font-size: 0.95rem; color: var(--bone); margin: 0 0 8px; }
+  .notes ul { margin: 0; padding-left: 18px; }
+  .notes li { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+  <div class="mockup-banner">
+    Layout mockup — <strong>not production code</strong>. Shader area is a static placeholder standing in for the live <span class="mono">fcdXRM</span> render.
+  </div>
+
+  <section class="hero">
+    <div class="hero-shader" aria-hidden="true">
+      <span class="hero-shader-label mono">placeholder — shadertoyRenderer.js plays fcdXRM here (Buffer A/B + Common + Image, ping-pong)</span>
+    </div>
+
+    <div class="hero-content">
+      <nav class="hero-nav mono">
+        <span class="nav-on">Home</span>
+        <span>Tutorials ▾</span>
+      </nav>
+
+      <div class="hero-text">
+        <h1 class="kuko" id="kukoText">KUKO</h1>
+      </div>
+
+      <div class="hero-toolbar">
+        <input type="search" placeholder="Search name, description, tag…" disabled>
+        <button disabled>＋ Add shader</button>
+        <select disabled><option>Newest first</option></select>
+      </div>
+    </div>
+  </section>
+
+  <div class="app">
+    <p class="section-label mono">↓ grid starts here, unaffected by the hero above</p>
+    <div class="grid">
+      <div class="card">shader_001</div>
+      <div class="card">shader_002</div>
+      <div class="card">shader_003</div>
+      <div class="card">shader_004</div>
+      <div class="card">shader_005</div>
+      <div class="card">shader_006</div>
+    </div>
+
+    <div class="notes">
+      <h2>What this mockup is showing</h2>
+      <ul>
+        <li><span class="mono">.hero-shader</span> and <span class="mono">.hero-text</span> both use <span class="mono">pointer-events: none</span> — nothing in the hero layer can block clicks on the nav/toolbar/grid.</li>
+        <li>Default blend is <span class="mono">mix-blend-mode: overlay</span>; use the switcher (bottom-right) to compare <span class="mono">screen</span> and <span class="mono">multiply</span>.</li>
+        <li>The hero is its own stacking context (<span class="mono">isolation: isolate</span>) so the blend mode only composites against the shader layer, not the whole page.</li>
+        <li>Not shown here (behavioral, not visual): the real hero pauses rendering on <span class="mono">visibilitychange</span> and stays within the existing 3-megapixel canvas budget.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="blend-switcher mono" role="group" aria-label="Preview blend mode">
+    <button data-blend="overlay" class="on">overlay</button>
+    <button data-blend="screen">screen</button>
+    <button data-blend="multiply">multiply</button>
+  </div>
+
+  <script>
+    const text = document.getElementById('kukoText');
+    document.querySelectorAll('.blend-switcher button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.blend-switcher button').forEach((b) => b.classList.remove('on'));
+        btn.classList.add('on');
+        text.classList.remove('blend-screen', 'blend-multiply');
+        const blend = btn.dataset.blend;
+        if (blend === 'screen') text.classList.add('blend-screen');
+        if (blend === 'multiply') text.classList.add('blend-multiply');
+      });
+    });
+  </script>
+
+</body>
+</html>
