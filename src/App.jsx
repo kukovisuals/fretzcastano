@@ -183,8 +183,8 @@ export default function App() {
               <>Walkthroughs &amp; interactive explainers.</>
             ) : (
               <>
-                <span className="mono">{index ? allShaders.length : "…"}</span> public shaders — a
-                daily practice archive. Click any piece to run it live.
+                <span className="mono">500+</span> of public shaders — a
+                daily practice on shadertoy. Click any piece to run it live. Code can also be view in <a href="https://www.shadertoy.com/user/kukovisuals">shadertoy</a> 
               </>
             )}
           </p>
