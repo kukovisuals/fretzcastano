@@ -33,6 +33,10 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+a {
+  color: #fff;
+}
+
 .mono { font-family: "JetBrains Mono", monospace; }
 
 .app {
